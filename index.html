@@ -7,6 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- html2pdf for Export Feature -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; -webkit-tap-highlight-color: transparent; }
@@ -18,7 +21,7 @@
         @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
         .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(226, 232, 240, 0.8); }
-        .stat-card { transition: all 0.2s ease-in-out; border: 1px solid #f1f5f9; }
+        .stat-card { transition: all 0.2s ease-in-out; border: 1px solid #f1f5f9; cursor: pointer; }
         .stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); border-color: #e2e8f0; }
         
         ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -27,37 +30,75 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
         select { -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer; }
+
+        /* Print formatting */
+        @media print {
+            .no-print { display: none !important; }
+            #dashboard-content { width: 100%; }
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden selection:bg-blue-100 selection:text-blue-900">
 
+    <!-- UPLOAD OVERLAY -->
     <div id="upload-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
         <div class="bg-white p-8 rounded-[1.5rem] shadow-2xl text-center max-w-sm w-full slide-up border border-white/20">
             <div class="bg-blue-50 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
                 <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
             </div>
             <h2 class="text-xl font-bold mb-2 text-slate-800">Master Data Required</h2>
-            <p class="text-slate-500 mb-6 text-sm">Please upload your master Excel file to initialize the portal.</p>
+            <p class="text-slate-500 mb-6 text-xs">Please upload your master Excel file to initialize.</p>
             <input type="file" id="file-upload" accept=".xlsx, .xls" class="hidden">
             <button onclick="document.getElementById('file-upload').click()" class="bg-slate-900 hover:bg-blue-600 text-white font-medium py-2.5 px-6 rounded-lg shadow transition-all duration-300 w-full text-sm">Browse File</button>
         </div>
     </div>
 
+    <!-- DRILL-DOWN MODAL -->
+    <div id="drilldown-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[60] hidden p-4">
+        <div class="bg-white rounded-[1.5rem] shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col slide-up overflow-hidden">
+            <div class="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800" id="modal-title">Month Details</h2>
+                    <p class="text-xs font-semibold text-slate-500" id="modal-subtitle">Policy Breakdown</p>
+                </div>
+                <button onclick="closeModal()" class="p-2 bg-white hover:bg-slate-200 rounded-full text-slate-500 transition shadow-sm border border-slate-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-0 overflow-y-auto flex-1 bg-white">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 sticky top-0 border-b border-slate-200">
+                        <tr>
+                            <th class="p-3 text-xs font-bold text-slate-500 uppercase">Date</th>
+                            <th class="p-3 text-xs font-bold text-slate-500 uppercase">Policy No</th>
+                            <th class="p-3 text-xs font-bold text-slate-500 uppercase">Insured Name</th>
+                            <th class="p-3 text-xs font-bold text-slate-500 uppercase">Product</th>
+                            <th class="p-3 text-xs font-bold text-slate-500 uppercase text-right">GWP / Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modal-table-body" class="divide-y divide-slate-100">
+                        <!-- Rows injected via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 1: HOME -->
     <div id="view-home" class="hidden flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 h-full w-full fade-in z-40 px-4 relative">
         <div class="z-10 mb-10 text-center slide-up">
             <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Performance <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Portal</span></h1>
         </div>
         
         <div class="z-10 max-w-2xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-5 w-full slide-up" style="animation-delay: 0.1s;">
-            <button onclick="navToRole('fresh')" class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 border border-slate-100 group flex flex-col items-center text-center">
-                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+            <button onclick="navToRole('fresh')" class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-lg transition-all transform hover:-translate-y-1 border border-slate-100 group flex flex-col items-center text-center">
+                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
                 </div>
                 <h2 class="text-lg font-bold text-slate-800">Fresh Business</h2>
             </button>
-
-            <button onclick="navToRole('renewal')" class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 border border-slate-100 group flex flex-col items-center text-center">
-                <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
+            <button onclick="navToRole('renewal')" class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-lg transition-all transform hover:-translate-y-1 border border-slate-100 group flex flex-col items-center text-center">
+                <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 </div>
                 <h2 class="text-lg font-bold text-slate-800">Renewal Performance</h2>
@@ -65,34 +106,31 @@
         </div>
     </div>
 
+    <!-- VIEW 2: ROLE SELECTION -->
     <div id="view-role" class="hidden flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 h-full w-full fade-in z-40 px-4 relative">
         <div class="absolute top-5 left-5 z-50">
             <button onclick="showView('view-home')" class="flex items-center text-slate-500 hover:text-slate-900 transition-colors font-semibold text-xs bg-white/50 px-3 py-1.5 rounded-full shadow-sm backdrop-blur-md">
                 <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Back
             </button>
         </div>
-
         <div class="z-10 mb-8 text-center slide-up">
             <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight" id="role-title">Select Module</h1>
         </div>
-        
         <div class="z-10 max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 w-full slide-up" style="animation-delay: 0.1s;">
             <button onclick="navToDashboard('agent')" class="bg-white p-5 rounded-2xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1 border border-slate-100 group flex flex-col items-center">
-                <div class="w-12 h-12 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center mb-3 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                <div class="w-12 h-12 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center mb-3 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                 </div>
                 <h2 class="text-base font-semibold text-slate-800">Agent</h2>
             </button>
-
             <button onclick="navToDashboard('manager')" class="bg-white p-5 rounded-2xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1 border border-slate-100 group flex flex-col items-center">
-                <div class="w-12 h-12 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center mb-3 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
+                <div class="w-12 h-12 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center mb-3 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 </div>
                 <h2 class="text-base font-semibold text-slate-800">Manager</h2>
             </button>
-
             <button onclick="navToDashboard('cluster')" class="bg-white p-5 rounded-2xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1 border border-slate-100 group flex flex-col items-center">
-                <div class="w-12 h-12 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center mb-3 group-hover:bg-slate-900 group-hover:text-white transition-colors duration-300">
+                <div class="w-12 h-12 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center mb-3 group-hover:bg-slate-900 group-hover:text-white transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                 </div>
                 <h2 class="text-base font-semibold text-slate-800">Cluster</h2>
@@ -100,27 +138,33 @@
         </div>
     </div>
 
+    <!-- VIEW 3: DASHBOARD -->
     <div id="view-dashboard" class="hidden flex-1 flex flex-col h-full bg-slate-50 fade-in">
         
         <header class="glass-panel sticky top-0 z-30">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center h-14">
-                    <button onclick="showView('view-role')" class="mr-3 p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    </button>
-                    <div class="flex items-center space-x-2">
-                        <h1 class="text-base font-bold text-slate-900" id="dashboard-title">Performance</h1>
-                        <span class="text-slate-300 text-sm font-light">|</span>
-                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5" id="dashboard-subtitle">Role</span>
+                <div class="flex justify-between items-center h-14">
+                    <div class="flex items-center">
+                        <button onclick="showView('view-role')" class="mr-3 p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors no-print">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                        </button>
+                        <div class="flex items-center space-x-2">
+                            <h1 class="text-base font-bold text-slate-900" id="dashboard-title">Performance</h1>
+                            <span class="text-slate-300 text-sm font-light">|</span>
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5" id="dashboard-subtitle">Role</span>
+                        </div>
                     </div>
+                    <!-- PDF Export Button -->
+                    <button onclick="exportDashboard()" class="no-print flex items-center bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Export PDF
+                    </button>
                 </div>
             </div>
         </header>
 
-        <div class="bg-white border-b border-slate-200 shadow-sm z-20">
+        <div class="bg-white border-b border-slate-200 shadow-sm z-20 no-print">
             <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8">
                 <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full">
-                    
                     <div class="relative w-full sm:w-48">
                         <select id="year-select" class="block w-full pl-3 pr-8 py-2 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500/50 rounded-lg transition-all" onchange="updateNameDropdown()">
                             <option value="">Select Year</option>
@@ -144,62 +188,88 @@
 
         <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
             
-            <div id="empty-state" class="flex flex-col items-center justify-center h-full min-h-[250px] text-center slide-up">
+            <div id="empty-state" class="flex flex-col items-center justify-center h-full min-h-[250px] text-center slide-up no-print">
                 <p class="text-slate-400 font-medium text-xs">Select mandatory filters above to load data.</p>
             </div>
 
-            <div class="max-w-7xl mx-auto space-y-5 hidden slide-up" id="dashboard-content">
-                
-                <div id="agent-profile" class="hidden bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm shadow-inner" id="agent-initials"></div>
-                        <div>
-                            <h3 class="text-sm font-bold text-slate-800" id="agent-name-display">Name</h3>
-                            <div class="flex items-center gap-3 mt-1 text-[10px] font-medium text-slate-500 uppercase tracking-wider">
-                                <span>IMD: <span class="text-slate-700 font-bold" id="agent-imd"></span></span>
-                                <span>|</span>
-                                <span>Agreement: <span class="text-slate-700 font-bold" id="agent-agreement"></span></span>
+            <!-- DASHBOARD CONTAINER TO BE EXPORTED -->
+            <div id="export-container" class="w-full">
+                <div class="max-w-7xl mx-auto space-y-5 hidden slide-up pb-10" id="dashboard-content">
+                    
+                    <div id="agent-profile" class="hidden bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm shadow-inner" id="agent-initials"></div>
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-800" id="agent-name-display">Name</h3>
+                                <div class="flex items-center gap-3 mt-1 text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                                    <span>IMD: <span class="text-slate-700 font-bold" id="agent-imd"></span></span>
+                                    <span>|</span>
+                                    <span>Agreement: <span class="text-slate-700 font-bold" id="agent-agreement"></span></span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div id="summary-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <!-- Injected via JS -->
-                </div>
+                    <div id="summary-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Injected via JS -->
+                    </div>
 
-                <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
-                    <div class="xl:col-span-2 space-y-4">
-                        <div id="fy-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                            <!-- Cards generated via JS -->
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+                        <div class="xl:col-span-2 space-y-4">
+                            <div id="fy-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                <!-- Cards generated via JS -->
+                            </div>
+                        </div>
+                        <div class="xl:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col h-[350px] xl:h-auto">
+                            <h2 class="text-sm font-bold text-slate-800 mb-3">Annual Trend</h2>
+                            <div class="relative flex-1 w-full min-h-[200px]">
+                                <canvas id="performanceChart"></canvas>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="xl:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col h-[350px] xl:h-auto">
-                        <h2 class="text-sm font-bold text-slate-800 mb-3">Annual Trend</h2>
-                        <div class="relative flex-1 w-full min-h-[200px]">
-                            <canvas id="performanceChart"></canvas>
+                    <!-- CLUSTER LEADERBOARD -->
+                    <div id="cluster-leaderboard" class="hidden grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
+                            <h2 class="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100" id="lb-agent-title">Top 5 Agents</h2>
+                            <div id="lb-agent-list" class="space-y-3"></div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
+                            <h2 class="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100" id="lb-manager-title">Top 5 Managers</h2>
+                            <div id="lb-manager-list" class="space-y-3"></div>
                         </div>
                     </div>
-                </div>
 
-                <div id="fresh-breakdowns" class="hidden grid grid-cols-1 md:grid-cols-2 gap-5 pt-4">
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
-                        <h2 class="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100">Product Wise Performance</h2>
-                        <div id="product-list" class="space-y-3 max-h-56 overflow-y-auto pr-2"></div>
+                    <!-- FRESH BREAKDOWNS -->
+                    <div id="fresh-breakdowns" class="hidden grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
+                            <h2 class="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100">Product Wise Performance</h2>
+                            <div id="product-list" class="space-y-3 max-h-56 overflow-y-auto pr-2"></div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
+                            <h2 class="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100">Sum Insured Wise</h2>
+                            <div id="si-list" class="space-y-3 max-h-56 overflow-y-auto pr-2"></div>
+                        </div>
                     </div>
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
-                        <h2 class="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100">Sum Insured Wise</h2>
-                        <div id="si-list" class="space-y-3 max-h-56 overflow-y-auto pr-2"></div>
+                    
+                    <!-- PERSISTENCY TRACKER (Renewal Only) -->
+                    <div id="persistency-tracker" class="hidden bg-white rounded-xl shadow-sm border border-slate-100 p-5 mt-2">
+                        <h2 class="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center justify-between">
+                            Historical Retention Tracker
+                            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase">Proxy Calculation</span>
+                        </h2>
+                        <div class="grid grid-cols-2 gap-4" id="persistency-stats"></div>
                     </div>
-                </div>
 
+                </div>
             </div>
-            <div class="h-10"></div>
         </main>
     </div>
 
     <script>
+        // === COLUMN CONSTANTS ===
+        const COL_POLICY = "Policy No";
+        const COL_INSURED = "Insured Name";
         const COL_AGENT = "Intermediary Name";
         const COL_MANAGER = "SSM Name";
         const COL_IMD_CODE = "Intermediary Code";
@@ -212,8 +282,9 @@
         const FY_MONTHS = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
 
         let rawData = [];
+        let filteredMonthData = []; // To store data for the modal drill-down
         let chartInstance = null;
-        let state = { main: null, sub: null };
+        let state = { main: null, sub: null, selectedYear: null, selectedName: null };
 
         document.addEventListener("DOMContentLoaded", () => {
             attemptFetchDefaultFile();
@@ -272,12 +343,8 @@
 
         function navToDashboard(subModule) {
             state.sub = subModule;
-            
-            const mainTitle = state.main === 'fresh' ? 'Fresh Business' : 'Renewal Performance';
-            const subTitle = subModule === 'agent' ? 'Agent Performance' : subModule === 'manager' ? 'Manager Performance' : 'Cluster Performance';
-            
-            document.getElementById('dashboard-title').innerText = mainTitle;
-            document.getElementById('dashboard-subtitle').innerText = subTitle;
+            document.getElementById('dashboard-title').innerText = state.main === 'fresh' ? 'Fresh' : 'Renewal';
+            document.getElementById('dashboard-subtitle').innerText = subModule;
             
             document.getElementById('year-select').value = "";
             document.getElementById('name-select').value = "";
@@ -293,6 +360,8 @@
             document.getElementById('dashboard-content').classList.add('hidden');
             document.getElementById('agent-profile').classList.add('hidden');
             document.getElementById('fresh-breakdowns').classList.add('hidden');
+            document.getElementById('cluster-leaderboard').classList.add('hidden');
+            document.getElementById('persistency-tracker').classList.add('hidden');
             if(chartInstance) chartInstance.destroy();
         }
 
@@ -326,16 +395,13 @@
                         const d = new Date(row[COL_DATE]);
                         if (isNaN(d)) return false;
                         const rowFY = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1;
-                        // If renewal, name should exist in current year OR base year
                         if (state.main === 'renewal') return rowFY === selectedYear || rowFY === (selectedYear - 1);
                         return rowFY === selectedYear;
                     });
                 }
-
                 const names = [...new Set(filteredData.map(row => row[colKey]).filter(n => n))].sort();
                 const currentVal = nameSelect.value;
                 nameSelect.innerHTML = '<option value="">Select Target Name</option>' + names.map(n => `<option value="${n}">${n}</option>`).join('');
-                
                 if(names.includes(currentVal)) nameSelect.value = currentVal;
             }
             renderDashboard();
@@ -350,24 +416,110 @@
             return `<span class="bg-slate-100 text-slate-500 text-[9px] px-1.5 py-0.5 rounded ml-2 font-bold shadow-sm">-</span>`;
         }
 
-        function renderDashboard() {
-            const selectedYear = parseInt(document.getElementById('year-select').value);
-            const selectedName = document.getElementById('name-select').value;
+        // === PDF EXPORT LOGIC ===
+        function exportDashboard() {
+            const element = document.getElementById('export-container');
+            const title = `${state.main.toUpperCase()}_${state.sub.toUpperCase()}_FY${state.selectedYear}`;
+            const opt = {
+                margin: 0.2,
+                filename: `${title}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+            };
             
-            if (!selectedYear) return resetDashboardView();
-            if (state.sub !== 'cluster' && !selectedName) return resetDashboardView();
+            // Temporary hide modal functionality visual cue for printing
+            document.querySelectorAll('.stat-card').forEach(el => {
+                el.style.transform = 'none';
+                el.style.boxShadow = 'none';
+            });
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Restore styles
+                document.querySelectorAll('.stat-card').forEach(el => el.style = '');
+            });
+        }
+
+        // === DRILL-DOWN MODAL LOGIC ===
+        function openDrillDown(monthIndex) {
+            const monthName = FY_MONTHS[monthIndex];
+            document.getElementById('modal-title').innerText = `${monthName} FY${state.selectedYear}-${state.selectedYear+1}`;
+            const tbody = document.getElementById('modal-table-body');
+            
+            // Filter rawData based on criteria
+            const policies = rawData.filter(row => {
+                if(!row[COL_DATE]) return false;
+                const date = new Date(row[COL_DATE]);
+                if(isNaN(date)) return false;
+                
+                const month = date.getMonth();
+                const year = date.getFullYear();
+                const rowFY = month >= 3 ? year : year - 1;
+                const rowFyMonthIndex = month >= 3 ? month - 3 : month + 9;
+
+                if (rowFyMonthIndex !== monthIndex) return false;
+                if (state.sub === 'agent' && row[COL_AGENT] !== state.selectedName) return false;
+                if (state.sub === 'manager' && row[COL_MANAGER] !== state.selectedName) return false;
+
+                const tType = (row[COL_TRANSACTION] || '').toString().toLowerCase();
+                const isFreshBaseTx = tType.includes('fresh') || tType.includes('roll over');
+                const isRenewalTx = tType.includes('our renewal');
+                
+                if (state.main === 'fresh') {
+                    return rowFY === state.selectedYear && (isFreshBaseTx || tType.includes('cancel'));
+                } else {
+                    return rowFY === state.selectedYear && isRenewalTx;
+                }
+            });
+
+            if (policies.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-sm text-slate-500">No transactions recorded for this month. (Base targets not shown here).</td></tr>`;
+            } else {
+                tbody.innerHTML = policies.map(p => {
+                    const d = new Date(p[COL_DATE]);
+                    const dateStr = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
+                    const prem = parseFloat(p[COL_PREM]) || 0;
+                    const type = (p[COL_TRANSACTION] || '').toLowerCase();
+                    const isCancel = type.includes('cancel');
+                    const color = isCancel ? 'text-rose-500' : 'text-slate-800';
+                    const sign = isCancel ? '-' : '';
+
+                    return `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="p-3 text-xs font-medium text-slate-600">${dateStr}</td>
+                        <td class="p-3 text-xs font-bold text-slate-800">${p[COL_POLICY] || 'N/A'}</td>
+                        <td class="p-3 text-xs font-medium text-slate-600 truncate max-w-[150px]" title="${p[COL_INSURED]}">${p[COL_INSURED] || 'Unknown'}</td>
+                        <td class="p-3 text-xs font-medium text-slate-500 truncate max-w-[100px]" title="${p[COL_PRODUCT]}">${p[COL_PRODUCT] || '-'}</td>
+                        <td class="p-3 text-xs font-bold ${color} text-right">${sign}₹${Math.abs(prem).toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
+                    </tr>`;
+                }).join('');
+            }
+            
+            document.getElementById('drilldown-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('drilldown-modal').classList.add('hidden');
+        }
+
+        // === MAIN DASHBOARD RENDER ===
+        function renderDashboard() {
+            state.selectedYear = parseInt(document.getElementById('year-select').value);
+            state.selectedName = document.getElementById('name-select').value;
+            
+            if (!state.selectedYear) return resetDashboardView();
+            if (state.sub !== 'cluster' && !state.selectedName) return resetDashboardView();
 
             document.getElementById('empty-state').classList.add('hidden');
             document.getElementById('dashboard-content').classList.remove('hidden');
 
             if (state.sub === 'agent') {
-                // Find profile details from any transaction for this agent in selected year
-                const agentRow = rawData.find(r => r[COL_AGENT] === selectedName);
+                const agentRow = rawData.find(r => r[COL_AGENT] === state.selectedName);
                 if (agentRow) {
                     document.getElementById('agent-profile').classList.remove('hidden');
                     document.getElementById('agent-profile').classList.add('flex');
-                    document.getElementById('agent-name-display').innerText = selectedName;
-                    document.getElementById('agent-initials').innerText = selectedName.substring(0, 2).toUpperCase();
+                    document.getElementById('agent-name-display').innerText = state.selectedName;
+                    document.getElementById('agent-initials').innerText = state.selectedName.substring(0, 2).toUpperCase();
                     document.getElementById('agent-imd').innerText = agentRow[COL_IMD_CODE] || 'N/A';
                     document.getElementById('agent-agreement').innerText = agentRow[COL_AGR_CODE] || 'N/A';
                 }
@@ -387,6 +539,12 @@
 
             let productBreakdown = {};
             let siBreakdown = {};
+            
+            // For Leaderboards & Persistency
+            let agentLB = {};
+            let managerLB = {};
+            let retentionYr1Base = 0, retentionYr1Ren = 0; // 13th month proxy (Prev Yr Base vs Renew)
+            let retentionYr2Base = 0, retentionYr2Ren = 0; // 25th month proxy (Prev-Prev Yr Base vs Renew)
 
             const now = new Date();
             const currentYear = now.getFullYear();
@@ -397,9 +555,6 @@
                 const date = new Date(row[COL_DATE]);
                 if (isNaN(date)) return;
 
-                if (state.sub === 'agent' && row[COL_AGENT] !== selectedName) return;
-                if (state.sub === 'manager' && row[COL_MANAGER] !== selectedName) return;
-
                 const month = date.getMonth(); 
                 const year = date.getFullYear();
                 const rowFY = month >= 3 ? year : year - 1;
@@ -407,21 +562,36 @@
                 
                 const tType = (row[COL_TRANSACTION] || '').toString().toLowerCase();
                 const premium = parseFloat(row[COL_PREM]) || 0;
+                const agent = row[COL_AGENT] || 'Unknown';
+                const manager = row[COL_MANAGER] || 'Unknown';
 
                 const isFreshBaseTx = tType.includes('fresh') || tType.includes('roll over');
                 const isRenewalTx = tType.includes('our renewal');
                 const isCancelTx = tType.includes('cancel'); 
 
+                // Leaderboard Initialization
+                if (state.sub === 'cluster') {
+                    if(!agentLB[agent]) agentLB[agent] = { freshAmt:0, baseNOP:0, renRenewed:0 };
+                    if(!managerLB[manager]) managerLB[manager] = { freshAmt:0, baseNOP:0, renRenewed:0 };
+                }
+
+                // Apply Name Filter for main metrics
+                const passesFilter = (state.sub === 'cluster' || 
+                                     (state.sub === 'agent' && row[COL_AGENT] === state.selectedName) || 
+                                     (state.sub === 'manager' && row[COL_MANAGER] === state.selectedName));
+
                 if (state.main === 'fresh') {
-                    if (rowFY === selectedYear) {
+                    if (rowFY === state.selectedYear) {
                         let finalPrem = 0, finalNop = 0;
-                        if (isFreshBaseTx) {
-                            finalNop = 1; finalPrem = premium;
-                        } else if (isCancelTx) {
-                            finalNop = -1; finalPrem = premium > 0 ? -Math.abs(premium) : premium;
-                        }
+                        if (isFreshBaseTx) { finalNop = 1; finalPrem = premium; } 
+                        else if (isCancelTx) { finalNop = -1; finalPrem = premium > 0 ? -Math.abs(premium) : premium; }
                         
-                        if(finalNop !== 0) {
+                        if (state.sub === 'cluster') {
+                            agentLB[agent].freshAmt += finalPrem;
+                            managerLB[manager].freshAmt += finalPrem;
+                        }
+
+                        if(passesFilter && finalNop !== 0) {
                             fyData[fyMonthIndex].freshNOP += finalNop;
                             fyData[fyMonthIndex].freshAmount += finalPrem;
                             totalFreshNOP += finalNop;
@@ -439,27 +609,47 @@
                             siBreakdown[si].prem += finalPrem;
                         }
                     }
-                    else if (rowFY === (selectedYear - 1)) {
+                    else if (rowFY === (state.selectedYear - 1) && passesFilter) {
                         if (isFreshBaseTx) { prevFreshNOP += 1; prevFreshAmt += premium; }
                         else if (isCancelTx) { prevFreshNOP -= 1; prevFreshAmt += (premium > 0 ? -Math.abs(premium) : premium); }
                     }
                 } 
                 else if (state.main === 'renewal') {
-                    if (rowFY === (selectedYear - 1) && (isFreshBaseTx || isRenewalTx)) totalBaseNOP += 1;
-                    if (rowFY === selectedYear && isRenewalTx) totalRenewed += 1;
-                    
-                    if (rowFY === (selectedYear - 2) && (isFreshBaseTx || isRenewalTx)) prevBaseNOP += 1;
-                    if (rowFY === (selectedYear - 1) && isRenewalTx) prevRenewed += 1;
+                    // Leaderboard Tracking (Current Year)
+                    if (state.sub === 'cluster') {
+                        if (rowFY === (state.selectedYear - 1) && (isFreshBaseTx || isRenewalTx)) {
+                            agentLB[agent].baseNOP += 1;
+                            managerLB[manager].baseNOP += 1;
+                        }
+                        if (rowFY === state.selectedYear && isRenewalTx) {
+                            agentLB[agent].renRenewed += 1;
+                            managerLB[manager].renRenewed += 1;
+                        }
+                    }
 
-                    if (rowFY === (selectedYear - 1) && (isFreshBaseTx || isRenewalTx)) fyData[fyMonthIndex].baseNOP += 1;
-                    if (rowFY === selectedYear && isRenewalTx) fyData[fyMonthIndex].renRenewed += 1;
+                    if (passesFilter) {
+                        // Persistency 13th Month Proxy (Current Year Retention)
+                        if (rowFY === (state.selectedYear - 1) && (isFreshBaseTx || isRenewalTx)) retentionYr1Base += 1;
+                        if (rowFY === state.selectedYear && isRenewalTx) retentionYr1Ren += 1;
+                        
+                        // Persistency 25th Month Proxy (Previous Year Retention)
+                        if (rowFY === (state.selectedYear - 2) && (isFreshBaseTx || isRenewalTx)) retentionYr2Base += 1;
+                        if (rowFY === (state.selectedYear - 1) && isRenewalTx) retentionYr2Ren += 1;
+
+                        // Grid & Summary Metrics
+                        if (rowFY === (state.selectedYear - 1) && (isFreshBaseTx || isRenewalTx)) { totalBaseNOP += 1; fyData[fyMonthIndex].baseNOP += 1; }
+                        if (rowFY === state.selectedYear && isRenewalTx) { totalRenewed += 1; fyData[fyMonthIndex].renRenewed += 1; }
+                        
+                        if (rowFY === (state.selectedYear - 2) && (isFreshBaseTx || isRenewalTx)) prevBaseNOP += 1;
+                        if (rowFY === (state.selectedYear - 1) && isRenewalTx) prevRenewed += 1;
+                    }
                 }
             });
 
             if (state.main === 'renewal') {
                 fyData.forEach((d, index) => {
                     const calMonth = (index + 3) % 12;
-                    const calYear = index < 9 ? selectedYear : selectedYear + 1;
+                    const calYear = index < 9 ? state.selectedYear : state.selectedYear + 1;
                     const isFuture = (calYear > currentYear) || (calYear === currentYear && calMonth > currentMonth);
                     d.isFuture = isFuture;
 
@@ -470,6 +660,71 @@
                     totalMissed += d.renMissed;
                     totalYet += d.yetToRenew;
                 });
+                
+                // Show Persistency Tracker
+                document.getElementById('persistency-tracker').classList.remove('hidden');
+                const yr1Pct = retentionYr1Base > 0 ? Math.round((retentionYr1Ren/retentionYr1Base)*100) : 0;
+                const yr2Pct = retentionYr2Base > 0 ? Math.round((retentionYr2Ren/retentionYr2Base)*100) : 0;
+                document.getElementById('persistency-stats').innerHTML = `
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 flex justify-between items-center">
+                        <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase">1st Year Retention (13M Proxy)</div>
+                            <div class="text-lg font-black text-slate-800">${yr1Pct}%</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-[10px] text-slate-500 font-medium">Base: ${retentionYr1Base}</div>
+                            <div class="text-[10px] text-emerald-600 font-bold">Renewed: ${retentionYr1Ren}</div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 flex justify-between items-center">
+                        <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase">2nd Year Retention (25M Proxy)</div>
+                            <div class="text-lg font-black text-slate-800">${yr2Pct}%</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-[10px] text-slate-500 font-medium">Base: ${retentionYr2Base}</div>
+                            <div class="text-[10px] text-emerald-600 font-bold">Renewed: ${retentionYr2Ren}</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                document.getElementById('persistency-tracker').classList.add('hidden');
+            }
+
+            // Cluster Leaderboards Logic
+            const lbSection = document.getElementById('cluster-leaderboard');
+            if (state.sub === 'cluster') {
+                lbSection.classList.remove('hidden');
+                
+                let sortedAgents = [], sortedManagers = [];
+                if (state.main === 'fresh') {
+                    document.getElementById('lb-agent-title').innerText = "Top 5 Agents by GWP";
+                    document.getElementById('lb-manager-title').innerText = "Top 5 Managers by GWP";
+                    sortedAgents = Object.keys(agentLB).sort((a,b) => agentLB[b].freshAmt - agentLB[a].freshAmt).slice(0, 5);
+                    sortedManagers = Object.keys(managerLB).sort((a,b) => managerLB[b].freshAmt - managerLB[a].freshAmt).slice(0, 5);
+                    
+                    document.getElementById('lb-agent-list').innerHTML = sortedAgents.map((name, i) => `<div class="flex justify-between items-center text-xs pb-2 border-b border-slate-50 last:border-0"><span class="font-medium text-slate-700 truncate"><span class="text-slate-400 mr-2">#${i+1}</span>${name}</span><span class="font-bold text-slate-800">₹${agentLB[name].freshAmt.toLocaleString('en-IN', {maximumFractionDigits:0})}</span></div>`).join('');
+                    document.getElementById('lb-manager-list').innerHTML = sortedManagers.map((name, i) => `<div class="flex justify-between items-center text-xs pb-2 border-b border-slate-50 last:border-0"><span class="font-medium text-slate-700 truncate"><span class="text-slate-400 mr-2">#${i+1}</span>${name}</span><span class="font-bold text-slate-800">₹${managerLB[name].freshAmt.toLocaleString('en-IN', {maximumFractionDigits:0})}</span></div>`).join('');
+                } else {
+                    document.getElementById('lb-agent-title').innerText = "Top 5 Agents by Retention %";
+                    document.getElementById('lb-manager-title').innerText = "Top 5 Managers by Retention %";
+                    
+                    // Filter minimum base of 5 for fair retention comparison
+                    sortedAgents = Object.keys(agentLB).filter(a => agentLB[a].baseNOP >= 5).sort((a,b) => (agentLB[b].renRenewed/agentLB[b].baseNOP) - (agentLB[a].renRenewed/agentLB[a].baseNOP)).slice(0, 5);
+                    sortedManagers = Object.keys(managerLB).filter(a => managerLB[a].baseNOP >= 5).sort((a,b) => (managerLB[b].renRenewed/managerLB[b].baseNOP) - (managerLB[a].renRenewed/managerLB[a].baseNOP)).slice(0, 5);
+
+                    document.getElementById('lb-agent-list').innerHTML = sortedAgents.map((name, i) => {
+                        const pct = Math.round((agentLB[name].renRenewed / agentLB[name].baseNOP)*100);
+                        return `<div class="flex justify-between items-center text-xs pb-2 border-b border-slate-50 last:border-0"><span class="font-medium text-slate-700 truncate"><span class="text-slate-400 mr-2">#${i+1}</span>${name}</span><div class="text-right"><span class="font-bold text-slate-800">${pct}%</span> <span class="text-[9px] text-slate-400">(${agentLB[name].renRenewed}/${agentLB[name].baseNOP})</span></div></div>`;
+                    }).join('');
+                    
+                    document.getElementById('lb-manager-list').innerHTML = sortedManagers.map((name, i) => {
+                        const pct = Math.round((managerLB[name].renRenewed / managerLB[name].baseNOP)*100);
+                        return `<div class="flex justify-between items-center text-xs pb-2 border-b border-slate-50 last:border-0"><span class="font-medium text-slate-700 truncate"><span class="text-slate-400 mr-2">#${i+1}</span>${name}</span><div class="text-right"><span class="font-bold text-slate-800">${pct}%</span> <span class="text-[9px] text-slate-400">(${managerLB[name].renRenewed}/${managerLB[name].baseNOP})</span></div></div>`;
+                    }).join('');
+                }
+            } else {
+                lbSection.classList.add('hidden');
             }
 
             renderSummary(totalFreshAmt, totalFreshNOP, prevFreshAmt, prevFreshNOP, totalBaseNOP, totalRenewed, totalMissed, totalYet, prevBaseNOP, prevRenewed);
@@ -572,31 +827,38 @@
                 const monthName = FY_MONTHS[index];
                 if (state.main === 'fresh') {
                     html += `
-                    <div class="bg-white rounded-xl border border-slate-100 p-4 stat-card">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-xs font-bold text-slate-400 uppercase">${monthName}</span>
-                            <span class="text-blue-600 text-[10px] font-bold bg-blue-50 px-1.5 py-0.5 rounded">${data.freshNOP} NOP</span>
+                    <div class="bg-white rounded-xl border border-slate-100 p-4 stat-card group relative" onclick="openDrillDown(${index})">
+                        <div class="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl z-0"></div>
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-slate-400 uppercase group-hover:text-blue-600 transition-colors">${monthName}</span>
+                                <span class="text-blue-600 text-[10px] font-bold bg-blue-50 px-1.5 py-0.5 rounded group-hover:bg-blue-100">${data.freshNOP} NOP</span>
+                            </div>
+                            <div class="text-sm font-extrabold text-slate-800 truncate tracking-tight">₹${data.freshAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                            <div class="mt-2 text-[9px] text-slate-400 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center">Click to view details <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></div>
                         </div>
-                        <div class="text-sm font-extrabold text-slate-800 truncate tracking-tight">₹${data.freshAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
                     </div>`;
                 } else {
                     const badge = data.isFuture 
-                        ? `<span class="bg-amber-50 text-amber-600 text-[9px] font-bold px-1.5 py-0.5 rounded">Future</span>`
+                        ? `<span class="bg-amber-50 text-amber-600 text-[9px] font-bold px-1.5 py-0.5 rounded group-hover:bg-amber-100">Future</span>`
                         : ``;
 
                     html += `
-                    <div class="bg-white rounded-xl border border-slate-100 p-4 stat-card">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-xs font-bold text-slate-400 uppercase">${monthName}</span>
-                            ${badge}
-                        </div>
-                        <div class="text-[10px] font-semibold text-slate-500 mb-2">Base: <span class="text-slate-800 font-bold">${data.baseNOP}</span></div>
-                        <div class="space-y-1 mt-2 pt-2 border-t border-slate-50">
-                            <div class="flex justify-between text-[11px]"><span class="text-slate-500">Renewed</span><span class="text-emerald-600 font-bold">${data.renRenewed}</span></div>
-                            ${data.isFuture 
-                                ? `<div class="flex justify-between text-[11px]"><span class="text-amber-500">Pending</span><span class="text-amber-500 font-bold">${data.yetToRenew}</span></div>` 
-                                : `<div class="flex justify-between text-[11px]"><span class="text-slate-500">Missed</span><span class="text-rose-500 font-bold">${data.renMissed}</span></div>`
-                            }
+                    <div class="bg-white rounded-xl border border-slate-100 p-4 stat-card group relative" onclick="openDrillDown(${index})">
+                        <div class="absolute inset-0 bg-slate-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl z-0"></div>
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-slate-400 uppercase group-hover:text-slate-600 transition-colors">${monthName}</span>
+                                ${badge}
+                            </div>
+                            <div class="text-[10px] font-semibold text-slate-500 mb-2">Base: <span class="text-slate-800 font-bold">${data.baseNOP}</span></div>
+                            <div class="space-y-1 mt-2 pt-2 border-t border-slate-50">
+                                <div class="flex justify-between text-[11px]"><span class="text-slate-500">Renewed</span><span class="text-emerald-600 font-bold">${data.renRenewed}</span></div>
+                                ${data.isFuture 
+                                    ? `<div class="flex justify-between text-[11px]"><span class="text-amber-500">Pending</span><span class="text-amber-500 font-bold">${data.yetToRenew}</span></div>` 
+                                    : `<div class="flex justify-between text-[11px]"><span class="text-slate-500">Missed</span><span class="text-rose-500 font-bold">${data.renMissed}</span></div>`
+                                }
+                            </div>
                         </div>
                     </div>`;
                 }
