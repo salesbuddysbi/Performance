@@ -7,9 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- html2pdf for PDF Export -->
+    
+    <!-- HTML to PDF/Image Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- html2canvas for Image/WhatsApp Sharing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
@@ -38,7 +38,7 @@
             #export-container { width: 100%; }
         }
         
-        /* Ranking Medals */
+        /* Ranking Badges */
         .rank-1 { background: linear-gradient(135deg, #ffd700 0%, #fdb931 100%); color: #855a00; border: 2px solid #ffe866; }
         .rank-2 { background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%); color: #475569; border: 2px solid #f1f5f9; }
         .rank-3 { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border: 2px solid #fcd34d; }
@@ -131,7 +131,6 @@
             <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight" id="role-title">Select Module</h1>
         </div>
         
-        <!-- Standard Roles -->
         <div id="role-standard" class="z-10 max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 w-full slide-up">
             <button onclick="navToDashboard('agent')" class="bg-white p-5 rounded-2xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1 border border-slate-100 group flex flex-col items-center">
                 <div class="w-12 h-12 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center mb-3 group-hover:bg-blue-600 group-hover:text-white transition-colors">
@@ -153,7 +152,6 @@
             </button>
         </div>
 
-        <!-- Ranking Roles -->
         <div id="role-ranking" class="z-10 max-w-2xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 w-full hidden slide-up">
             <button onclick="navToDashboard('gwp_rank')" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1 border border-amber-100 group flex flex-col items-center">
                 <div class="w-14 h-14 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center mb-3 group-hover:bg-amber-500 group-hover:text-white transition-colors">
@@ -187,15 +185,12 @@
                         </div>
                     </div>
                     
-                    <!-- Export Actions -->
                     <div class="flex space-x-2 no-print">
-                        <!-- PDF for standard Dashboard -->
-                        <button id="btn-export-pdf" onclick="exportDashboard()" class="flex items-center bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors hidden">
+                        <button id="btn-export-pdf" onclick="exportPDF()" class="flex items-center bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
                             <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> PDF
                         </button>
-                        <!-- WhatsApp Share for Ranking -->
-                        <button id="btn-export-wa" onclick="shareRankingToWhatsapp()" class="flex items-center bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors hidden">
-                            <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg> Share
+                        <button id="btn-export-wa" onclick="shareToWhatsapp(this)" class="flex items-center bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                            <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg> Share WA
                         </button>
                     </div>
                 </div>
@@ -227,7 +222,6 @@
                     <div id="month-container" class="relative w-full sm:w-48 hidden">
                         <select id="month-select" class="block w-full pl-3 pr-8 py-2 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500/50 rounded-lg transition-all" onchange="renderRanking()">
                             <option value="">Select Month</option>
-                            <!-- Months populated dynamically based on FY -->
                         </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
                             <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
@@ -244,7 +238,6 @@
                 <p class="text-slate-400 font-medium text-xs">Select mandatory filters above to load data.</p>
             </div>
 
-            <!-- EXPORT CONTAINER FOR PDF/IMG -->
             <div id="export-container" class="w-full">
                 
                 <!-- 1. STANDARD DASHBOARD UI -->
@@ -264,15 +257,11 @@
                         </div>
                     </div>
 
-                    <div id="summary-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <!-- Injected via JS -->
-                    </div>
+                    <div id="summary-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
 
                     <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
                         <div class="xl:col-span-2 space-y-4">
-                            <div id="fy-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                <!-- Cards generated via JS -->
-                            </div>
+                            <div id="fy-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"></div>
                         </div>
                         <div class="xl:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col h-[350px] xl:h-auto">
                             <h2 class="text-sm font-bold text-slate-800 mb-3">Annual Trend</h2>
@@ -282,20 +271,17 @@
                         </div>
                     </div>
 
-                    <!-- CLUSTER LEADERBOARD -->
-                    <div id="cluster-leaderboard" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-4 pt-2">
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
-                            <h2 class="text-xs font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider">Top 3 By GWP (YTD)</h2>
-                            <div id="lb-gwp-list" class="space-y-2.5"></div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
-                            <h2 class="text-xs font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider">Top 3 By NOP (YTD)</h2>
-                            <div id="lb-nop-list" class="space-y-2.5"></div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
-                            <h2 class="text-xs font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider">Top 3 Renewal % (YTD)</h2>
-                            <div id="lb-ren-list" class="space-y-2.5"></div>
-                        </div>
+                    <!-- CLUSTER LEADERBOARDS -->
+                    <div id="cluster-leaderboard-fresh" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-blue-600">Top 3 YTD GWP</h2><div id="lb-ytd-gwp" class="space-y-2.5"></div></div>
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-amber-500">Top 3 YTD NOP</h2><div id="lb-ytd-nop" class="space-y-2.5"></div></div>
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-blue-600">Top 3 MTD GWP</h2><div id="lb-mtd-gwp" class="space-y-2.5"></div></div>
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-amber-500">Top 3 MTD NOP</h2><div id="lb-mtd-nop" class="space-y-2.5"></div></div>
+                    </div>
+
+                    <div id="cluster-leaderboard-renewal" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-emerald-600">Top 3 YTD Retention %</h2><div id="lb-ytd-ren" class="space-y-2.5"></div></div>
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-emerald-600">Top 3 MTD Retention %</h2><div id="lb-mtd-ren" class="space-y-2.5"></div></div>
                     </div>
 
                     <!-- FRESH BREAKDOWNS -->
@@ -310,7 +296,6 @@
                         </div>
                     </div>
                     
-                    <!-- PERSISTENCY TRACKER (Renewal) -->
                     <div id="persistency-tracker" class="hidden bg-white rounded-xl shadow-sm border border-slate-100 p-5 mt-2">
                         <h2 class="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center justify-between">
                             Historical Retention Tracker
@@ -323,13 +308,12 @@
                 <!-- 2. RANKING BOARD UI -->
                 <div class="max-w-3xl mx-auto hidden slide-up pb-10" id="ranking-board-content">
                     <div class="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden relative">
-                        <!-- Decorative header bg -->
                         <div class="h-32 bg-gradient-to-br from-slate-900 to-slate-800 absolute top-0 left-0 w-full z-0"></div>
                         <div class="absolute top-0 right-0 w-48 h-48 bg-amber-500 rounded-full blur-3xl opacity-20 z-0"></div>
                         
                         <div class="relative z-10 p-8 text-center border-b border-slate-100/10">
                             <h1 class="text-3xl font-black text-white tracking-tight mb-2 uppercase" id="rb-title">Monthly Ranking</h1>
-                            <p class="text-slate-300 font-semibold text-sm" id="rb-subtitle">August 2026</p>
+                            <p class="text-slate-300 font-semibold text-sm" id="rb-subtitle">Month Year</p>
                         </div>
                         
                         <div class="p-6 bg-slate-50">
@@ -337,9 +321,7 @@
                                 <span>Agent</span>
                                 <span id="rb-metric-label">Score</span>
                             </div>
-                            <div id="rb-list" class="space-y-3">
-                                <!-- Ranks injected here -->
-                            </div>
+                            <div id="rb-list" class="space-y-3"></div>
                         </div>
                     </div>
                 </div>
@@ -402,9 +384,7 @@
                 });
                 document.getElementById('upload-overlay').classList.add('hidden');
                 showView('view-home');
-            } catch (err) {
-                alert("Error parsing Excel file.");
-            }
+            } catch (err) { alert("Error parsing Excel file."); }
         }
 
         function showView(viewId) {
@@ -432,31 +412,21 @@
         function navToDashboard(subModule) {
             state.sub = subModule;
             
-            // Set Header Text
             if (state.main === 'ranking') {
                 document.getElementById('dashboard-title').innerText = 'Agent Ranking';
                 document.getElementById('dashboard-subtitle').innerText = subModule === 'gwp_rank' ? 'GWP' : 'NOP';
+                document.getElementById('name-container').classList.add('hidden');
+                document.getElementById('month-container').classList.remove('hidden');
             } else {
                 document.getElementById('dashboard-title').innerText = state.main === 'fresh' ? 'Fresh' : 'Renewal';
                 document.getElementById('dashboard-subtitle').innerText = subModule;
+                document.getElementById('name-container').classList.toggle('hidden', subModule === 'cluster');
+                document.getElementById('month-container').classList.add('hidden');
             }
             
             document.getElementById('year-select').value = "";
             document.getElementById('name-select').value = "";
             document.getElementById('month-select').value = "";
-            
-            // Configure UI Controls
-            if (state.main === 'ranking') {
-                document.getElementById('name-container').classList.add('hidden');
-                document.getElementById('month-container').classList.remove('hidden');
-                document.getElementById('btn-export-pdf').classList.add('hidden');
-                document.getElementById('btn-export-wa').classList.remove('hidden');
-            } else {
-                document.getElementById('name-container').classList.toggle('hidden', subModule === 'cluster');
-                document.getElementById('month-container').classList.add('hidden');
-                document.getElementById('btn-export-pdf').classList.remove('hidden');
-                document.getElementById('btn-export-wa').classList.add('hidden');
-            }
             
             populateYears();
             updateDependentDropdowns();
@@ -472,7 +442,8 @@
             if (state.main !== 'ranking') {
                 document.getElementById('agent-profile').classList.add('hidden');
                 document.getElementById('fresh-breakdowns').classList.add('hidden');
-                document.getElementById('cluster-leaderboard').classList.add('hidden');
+                document.getElementById('cluster-leaderboard-fresh').classList.add('hidden');
+                document.getElementById('cluster-leaderboard-renewal').classList.add('hidden');
                 document.getElementById('persistency-tracker').classList.add('hidden');
             }
             if(chartInstance) chartInstance.destroy();
@@ -497,9 +468,7 @@
                 const monthSelect = document.getElementById('month-select');
                 if (selectedYear) {
                     monthSelect.innerHTML = '<option value="">Select Month</option>' + FY_MONTHS.map((m, i) => `<option value="${i}">${m}</option>`).join('');
-                } else {
-                    monthSelect.innerHTML = '<option value="">Select Month</option>';
-                }
+                } else { monthSelect.innerHTML = '<option value="">Select Month</option>'; }
                 renderRanking();
             } else {
                 const nameSelect = document.getElementById('name-select');
@@ -543,67 +512,74 @@
             return `<span class="bg-slate-100 text-slate-500 text-[9px] px-1.5 py-0.5 rounded ml-2 font-bold shadow-sm">-</span>`;
         }
 
-        // === PDF EXPORT (Portrait) ===
-        function exportDashboard() {
+        // === PDF EXPORT ===
+        function exportPDF() {
+            const isRanking = state.main === 'ranking';
             const element = document.getElementById('export-container');
+            
+            // Un-constrain scrolling areas for full PDF capture
+            const scrolls = element.querySelectorAll('.overflow-y-auto');
+            scrolls.forEach(el => { el.classList.remove('max-h-56', 'overflow-y-auto'); });
+            
             let filename = `${state.main.toUpperCase()}_${state.sub.toUpperCase()}_FY${state.selectedYear}`;
             const dateStr = new Date().toISOString().split('T')[0];
-            if (state.sub === 'agent' && state.selectedName) {
-                filename = `${state.selectedName.replace(/\s+/g, '_')}_Report_${dateStr}`;
-            }
+            if (state.sub === 'agent' && state.selectedName) filename = `${state.selectedName.replace(/\s+/g, '_')}_Report_${dateStr}`;
+            else if (isRanking) filename = `Ranking_${dateStr}`;
             
             const opt = {
-                margin: 0.3,
-                filename: `${filename}.pdf`,
+                margin: 0.3, filename: `${filename}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } // Switched to portrait
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } 
             };
             
-            document.querySelectorAll('.stat-card').forEach(el => {
-                el.style.transform = 'none'; el.style.boxShadow = 'none';
-            });
+            document.querySelectorAll('.stat-card').forEach(el => { el.style.transform = 'none'; el.style.boxShadow = 'none'; });
             
             html2pdf().set(opt).from(element).save().then(() => {
                 document.querySelectorAll('.stat-card').forEach(el => el.style = '');
+                scrolls.forEach(el => { el.classList.add('max-h-56', 'overflow-y-auto'); });
             });
         }
 
         // === WHATSAPP SHARE IMAGE ===
-        async function shareRankingToWhatsapp() {
-            const element = document.getElementById('ranking-board-content');
-            // Hide scrollbar briefly for cleaner image
-            element.style.overflow = 'hidden'; 
-            const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#f8fafc' });
-            element.style.overflow = '';
+        async function shareToWhatsapp(btnObj) {
+            btnObj.innerHTML = `<svg class="w-4 h-4 mr-1.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating...`;
             
+            const isRanking = state.main === 'ranking';
+            const element = document.getElementById(isRanking ? 'ranking-board-content' : 'export-container');
+            
+            const scrolls = element.querySelectorAll('.overflow-y-auto');
+            scrolls.forEach(el => { el.classList.remove('max-h-56', 'overflow-y-auto'); });
+            
+            const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#f8fafc' });
+            
+            scrolls.forEach(el => { el.classList.add('max-h-56', 'overflow-y-auto'); });
+            btnObj.innerHTML = `<svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg> Share WA`;
+
             canvas.toBlob(async (blob) => {
                 const dateStr = new Date().toISOString().split('T')[0];
-                const filename = `Agent_Ranking_${dateStr}.png`;
-                const file = new File([blob], filename, { type: 'image/png' });
+                let filename = `Report_${dateStr}.png`;
+                let msgTitle = "Performance Report";
                 
-                const title = state.sub === 'gwp_rank' ? 'Top Agents by GWP' : 'Top Agents by NOP';
-                const monthName = FY_MONTHS[state.selectedMonth];
-                const text = `🏆 *${title} - ${monthName} FY${state.selectedYear}* 🏆\nCheck out our top performers for this month! Great job team. 🚀`;
+                if (state.sub === 'agent' && state.selectedName) { filename = `${state.selectedName.replace(/\s+/g, '_')}_${dateStr}.png`; msgTitle = `${state.selectedName} Dashboard`; }
+                else if (isRanking) { filename = `Ranking_${dateStr}.png`; msgTitle = `Agent Rankings (${FY_MONTHS[state.selectedMonth]} FY${state.selectedYear})`; }
+                
+                const file = new File([blob], filename, { type: 'image/png' });
+                const textMsg = `📊 *${msgTitle} - ${dateStr}*\nPlease find the detailed report attached.`;
                 
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    try {
-                        await navigator.share({
-                            title: 'Agent Ranking',
-                            text: text,
-                            files: [file]
-                        });
-                    } catch (err) { console.log('Share canceled or failed', err); }
+                    try { await navigator.share({ title: msgTitle, text: textMsg, files: [file] }); } 
+                    catch (err) { fallbackDownload(URL.createObjectURL(blob), filename, textMsg); }
                 } else {
-                    // Fallback for desktop/unsupported browsers: Download image & open WA link
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = filename;
-                    a.click();
-                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`);
+                    fallbackDownload(URL.createObjectURL(blob), filename, textMsg);
                 }
             });
+        }
+
+        function fallbackDownload(url, filename, textMsg) {
+            const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+            const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(textMsg + "\n\n_(Report image downloaded to your device, please attach it here)_")}`;
+            window.open(waUrl, '_blank');
         }
 
         // === DRILL-DOWN MODAL LOGIC ===
@@ -624,7 +600,6 @@
 
                 if (rowFyMonthIndex !== monthIndex) return false;
                 
-                // Name match (if agent/manager)
                 if (state.sub === 'agent' && row[COL_AGENT] !== state.selectedName) return false;
                 if (state.sub === 'manager' && row[COL_MANAGER] !== state.selectedName) return false;
 
@@ -632,16 +607,12 @@
                 const isFreshBaseTx = tType.includes('fresh') || tType.includes('roll over');
                 const isRenewalTx = tType.includes('our renewal');
                 
-                if (state.main === 'fresh') {
-                    return rowFY === state.selectedYear && (isFreshBaseTx || tType.includes('cancel'));
-                } else {
-                    // Show only renewals logged in selected year for drilldown clarity
-                    return rowFY === state.selectedYear && isRenewalTx;
-                }
+                if (state.main === 'fresh') { return rowFY === state.selectedYear && (isFreshBaseTx || tType.includes('cancel')); } 
+                else { return rowFY === state.selectedYear && isRenewalTx; }
             });
 
             if (policies.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-5 text-center text-xs text-slate-500 font-medium">No transactions recorded for this month. (Target base policies not shown).</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="p-5 text-center text-xs text-slate-500 font-medium">No transactions recorded.</td></tr>`;
             } else {
                 tbody.innerHTML = policies.map(p => {
                     const d = new Date(p[COL_DATE]);
@@ -664,13 +635,10 @@
                     </tr>`;
                 }).join('');
             }
-            
             document.getElementById('drilldown-modal').classList.remove('hidden');
         }
 
-        function closeModal() {
-            document.getElementById('drilldown-modal').classList.add('hidden');
-        }
+        function closeModal() { document.getElementById('drilldown-modal').classList.add('hidden'); }
 
         // === RANKING RENDER LOGIC ===
         function renderRanking() {
@@ -707,30 +675,26 @@
                         const agent = row[COL_AGENT];
                         if (agent) {
                             if (!agents[agent]) agents[agent] = { gwp: 0, nop: 0 };
-                            
                             const prem = parseFloat(row[COL_PREM]) || 0;
-                            if (isFreshBaseTx) {
-                                agents[agent].nop += 1;
-                                agents[agent].gwp += prem;
-                            } else {
-                                agents[agent].nop -= 1;
-                                agents[agent].gwp += (prem > 0 ? -Math.abs(prem) : prem);
-                            }
+                            if (isFreshBaseTx) { agents[agent].nop += 1; agents[agent].gwp += prem; } 
+                            else { agents[agent].nop -= 1; agents[agent].gwp += (prem > 0 ? -Math.abs(prem) : prem); }
                         }
                     }
                 }
             });
 
-            // Sort logic
             let sorted = Object.keys(agents).filter(a => agents[a].nop > 0 || agents[a].gwp > 0);
-            if (state.sub === 'gwp_rank') {
-                sorted.sort((a,b) => agents[b].gwp - agents[a].gwp);
-            } else {
-                sorted.sort((a,b) => agents[b].nop - agents[a].nop);
-            }
-
-            // Top 10 limit for clean board
-            sorted = sorted.slice(0, 10);
+            
+            // SMART TIE BREAKERS
+            sorted.sort((a, b) => {
+                if (state.sub === 'gwp_rank') {
+                    if (agents[b].gwp !== agents[a].gwp) return agents[b].gwp - agents[a].gwp;
+                    return agents[b].nop - agents[a].nop;
+                } else {
+                    if (agents[b].nop !== agents[a].nop) return agents[b].nop - agents[a].nop;
+                    return agents[b].gwp - agents[a].gwp;
+                }
+            });
 
             const listDiv = document.getElementById('rb-list');
             if (sorted.length === 0) {
@@ -739,28 +703,26 @@
             }
 
             listDiv.innerHTML = sorted.map((agent, i) => {
-                const isTop3 = i < 3;
                 let rankClass = "bg-white border-slate-100 text-slate-600";
                 let medal = `#${i+1}`;
-                
-                if (i === 0) { rankClass = "rank-1"; medal = "🥇"; }
-                else if (i === 1) { rankClass = "rank-2"; medal = "🥈"; }
-                else if (i === 2) { rankClass = "rank-3"; medal = "🥉"; }
+                if (i === 0) { rankClass = "rank-1 text-[20px]"; medal = "🥇"; }
+                else if (i === 1) { rankClass = "rank-2 text-[20px]"; medal = "🥈"; }
+                else if (i === 2) { rankClass = "rank-3 text-[20px]"; medal = "🥉"; }
 
                 const score = state.sub === 'gwp_rank' 
                     ? `₹${agents[agent].gwp.toLocaleString('en-IN', {maximumFractionDigits:0})}`
                     : `${agents[agent].nop} NOP`;
+                const subScore = state.sub === 'gwp_rank' ? `${agents[agent].nop} NOP` : `₹${agents[agent].gwp.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
 
                 return `
-                <div class="flex items-center p-3 md:p-4 rounded-xl shadow-sm border ${isTop3 ? 'transform scale-[1.02]' : 'bg-white border-slate-100'} transition-all mb-3">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-lg ${rankClass} shadow-sm z-10 shrink-0">
-                        ${medal}
-                    </div>
+                <div class="flex items-center p-3 rounded-xl shadow-sm border bg-white border-slate-100 mb-3">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm ${rankClass} shadow-sm shrink-0">${medal}</div>
                     <div class="ml-4 flex-1 truncate pr-4">
-                        <div class="font-bold ${isTop3 ? 'text-slate-900 text-sm md:text-base' : 'text-slate-700 text-sm'} truncate">${agent}</div>
+                        <div class="font-bold text-slate-700 text-sm truncate">${agent}</div>
                     </div>
-                    <div class="font-black ${isTop3 ? 'text-slate-900 text-base md:text-lg' : 'text-slate-800 text-sm'} tracking-tight shrink-0">
-                        ${score}
+                    <div class="text-right shrink-0">
+                        <div class="font-black text-slate-800 text-sm tracking-tight">${score}</div>
+                        <div class="text-[9px] font-bold text-slate-400 uppercase">${subScore}</div>
                     </div>
                 </div>`;
             }).join('');
@@ -802,14 +764,8 @@
             let totalBaseNOP = 0, totalRenewed = 0, totalMissed = 0, totalYet = 0;
             let prevBaseNOP = 0, prevRenewed = 0;
 
-            let productBreakdown = {};
-            let siBreakdown = {};
-            
-            // Cluster Top 3 tracking
-            let agentLB = {};
-            
-            let retentionYr1Base = 0, retentionYr1Ren = 0; 
-            let retentionYr2Base = 0, retentionYr2Ren = 0; 
+            let productBreakdown = {}, siBreakdown = {}, agentLB = {};
+            let retentionYr1Base = 0, retentionYr1Ren = 0, retentionYr2Base = 0, retentionYr2Ren = 0; 
 
             const now = new Date();
             const currentYear = now.getFullYear();
@@ -834,7 +790,7 @@
                 const isCancelTx = tType.includes('cancel'); 
 
                 if (state.sub === 'cluster') {
-                    if(!agentLB[agent]) agentLB[agent] = { ytdGWP:0, ytdNOP:0, ytdBase:0, ytdRen:0 };
+                    if(!agentLB[agent]) agentLB[agent] = { ytdGWP:0, ytdNOP:0, mtdGWP:0, mtdNOP:0, ytdBase:0, ytdRen:0, mtdBase:0, mtdRen:0 };
                 }
 
                 const passesFilter = (state.sub === 'cluster' || 
@@ -850,6 +806,10 @@
                         if (state.sub === 'cluster' && finalNop !== 0) {
                             agentLB[agent].ytdGWP += finalPrem;
                             agentLB[agent].ytdNOP += finalNop;
+                            if (year === currentYear && month === currentMonth) {
+                                agentLB[agent].mtdGWP += finalPrem;
+                                agentLB[agent].mtdNOP += finalNop;
+                            }
                         }
 
                         if(passesFilter && finalNop !== 0) {
@@ -877,20 +837,24 @@
                 } 
                 else if (state.main === 'renewal') {
                     if (state.sub === 'cluster') {
-                        if (rowFY === (state.selectedYear - 1) && (isFreshBaseTx || isRenewalTx)) agentLB[agent].ytdBase += 1;
-                        if (rowFY === state.selectedYear && isRenewalTx) agentLB[agent].ytdRen += 1;
+                        if (rowFY === (state.selectedYear - 1) && (isFreshBaseTx || isRenewalTx)) {
+                            agentLB[agent].ytdBase += 1;
+                            if (year === (currentYear - 1) && month === currentMonth) agentLB[agent].mtdBase += 1;
+                        }
+                        if (rowFY === state.selectedYear && isRenewalTx) {
+                            agentLB[agent].ytdRen += 1;
+                            if (year === currentYear && month === currentMonth) agentLB[agent].mtdRen += 1;
+                        }
                     }
 
                     if (passesFilter) {
                         if (rowFY === (state.selectedYear - 1) && (isFreshBaseTx || isRenewalTx)) retentionYr1Base += 1;
                         if (rowFY === state.selectedYear && isRenewalTx) retentionYr1Ren += 1;
-                        
                         if (rowFY === (state.selectedYear - 2) && (isFreshBaseTx || isRenewalTx)) retentionYr2Base += 1;
                         if (rowFY === (state.selectedYear - 1) && isRenewalTx) retentionYr2Ren += 1;
 
                         if (rowFY === (state.selectedYear - 1) && (isFreshBaseTx || isRenewalTx)) { totalBaseNOP += 1; fyData[fyMonthIndex].baseNOP += 1; }
                         if (rowFY === state.selectedYear && isRenewalTx) { totalRenewed += 1; fyData[fyMonthIndex].renRenewed += 1; }
-                        
                         if (rowFY === (state.selectedYear - 2) && (isFreshBaseTx || isRenewalTx)) prevBaseNOP += 1;
                         if (rowFY === (state.selectedYear - 1) && isRenewalTx) prevRenewed += 1;
                     }
@@ -903,13 +867,10 @@
                     const calYear = index < 9 ? state.selectedYear : state.selectedYear + 1;
                     const isFuture = (calYear > currentYear) || (calYear === currentYear && calMonth > currentMonth);
                     d.isFuture = isFuture;
-
                     const shortfall = Math.max(0, d.baseNOP - d.renRenewed);
                     if (isFuture) { d.renMissed = 0; d.yetToRenew = shortfall; } 
                     else { d.renMissed = shortfall; d.yetToRenew = 0; }
-
-                    totalMissed += d.renMissed;
-                    totalYet += d.yetToRenew;
+                    totalMissed += d.renMissed; totalYet += d.yetToRenew;
                 });
                 
                 document.getElementById('persistency-tracker').classList.remove('hidden');
@@ -917,49 +878,40 @@
                 const yr2Pct = retentionYr2Base > 0 ? Math.round((retentionYr2Ren/retentionYr2Base)*100) : 0;
                 document.getElementById('persistency-stats').innerHTML = `
                     <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 flex justify-between items-center">
-                        <div>
-                            <div class="text-[10px] font-bold text-slate-400 uppercase">1st Year Retention (13M Proxy)</div>
-                            <div class="text-lg font-black text-slate-800">${yr1Pct}%</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-[10px] text-slate-500 font-medium">Base: ${retentionYr1Base}</div>
-                            <div class="text-[10px] text-emerald-600 font-bold">Renewed: ${retentionYr1Ren}</div>
-                        </div>
+                        <div><div class="text-[10px] font-bold text-slate-400 uppercase">1st Yr Retention (13M Proxy)</div><div class="text-lg font-black text-slate-800">${yr1Pct}%</div></div>
+                        <div class="text-right"><div class="text-[10px] text-slate-500 font-medium">Base: ${retentionYr1Base}</div><div class="text-[10px] text-emerald-600 font-bold">Renewed: ${retentionYr1Ren}</div></div>
                     </div>
                     <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 flex justify-between items-center">
-                        <div>
-                            <div class="text-[10px] font-bold text-slate-400 uppercase">2nd Year Retention (25M Proxy)</div>
-                            <div class="text-lg font-black text-slate-800">${yr2Pct}%</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-[10px] text-slate-500 font-medium">Base: ${retentionYr2Base}</div>
-                            <div class="text-[10px] text-emerald-600 font-bold">Renewed: ${retentionYr2Ren}</div>
-                        </div>
+                        <div><div class="text-[10px] font-bold text-slate-400 uppercase">2nd Yr Retention (25M Proxy)</div><div class="text-lg font-black text-slate-800">${yr2Pct}%</div></div>
+                        <div class="text-right"><div class="text-[10px] text-slate-500 font-medium">Base: ${retentionYr2Base}</div><div class="text-[10px] text-emerald-600 font-bold">Renewed: ${retentionYr2Ren}</div></div>
                     </div>
                 `;
-            } else {
-                document.getElementById('persistency-tracker').classList.add('hidden');
-            }
+            } else { document.getElementById('persistency-tracker').classList.add('hidden'); }
 
-            const lbSection = document.getElementById('cluster-leaderboard');
+            const freshLB = document.getElementById('cluster-leaderboard-fresh');
+            const renLB = document.getElementById('cluster-leaderboard-renewal');
+            
             if (state.sub === 'cluster') {
-                lbSection.classList.remove('hidden');
-                lbSection.classList.add('grid');
-                
-                const topGwp = Object.keys(agentLB).sort((a,b) => agentLB[b].ytdGWP - agentLB[a].ytdGWP).slice(0, 3);
-                const topNop = Object.keys(agentLB).sort((a,b) => agentLB[b].ytdNOP - agentLB[a].ytdNOP).slice(0, 3);
-                const topRen = Object.keys(agentLB).filter(a => agentLB[a].ytdBase >= 5).sort((a,b) => (agentLB[b].ytdRen/agentLB[b].ytdBase) - (agentLB[a].ytdRen/agentLB[a].ytdBase)).slice(0, 3);
+                if (state.main === 'fresh') {
+                    freshLB.classList.remove('hidden'); renLB.classList.add('hidden');
+                    const tYtdGwp = Object.keys(agentLB).sort((a,b) => agentLB[b].ytdGWP - agentLB[a].ytdGWP).slice(0, 3);
+                    const tYtdNop = Object.keys(agentLB).sort((a,b) => agentLB[b].ytdNOP - agentLB[a].ytdNOP).slice(0, 3);
+                    const tMtdGwp = Object.keys(agentLB).sort((a,b) => agentLB[b].mtdGWP - agentLB[a].mtdGWP).slice(0, 3);
+                    const tMtdNop = Object.keys(agentLB).sort((a,b) => agentLB[b].mtdNOP - agentLB[a].mtdNOP).slice(0, 3);
 
-                document.getElementById('lb-gwp-list').innerHTML = topGwp.map((a, i) => `<div class="flex justify-between items-center text-xs pb-1.5 border-b border-slate-50 last:border-0"><span class="font-medium text-slate-700 truncate"><span class="text-slate-400 mr-1">#${i+1}</span>${a}</span><span class="font-bold text-blue-600">₹${agentLB[a].ytdGWP.toLocaleString('en-IN', {maximumFractionDigits:0})}</span></div>`).join('');
-                document.getElementById('lb-nop-list').innerHTML = topNop.map((a, i) => `<div class="flex justify-between items-center text-xs pb-1.5 border-b border-slate-50 last:border-0"><span class="font-medium text-slate-700 truncate"><span class="text-slate-400 mr-1">#${i+1}</span>${a}</span><span class="font-bold text-amber-500">${agentLB[a].ytdNOP}</span></div>`).join('');
-                document.getElementById('lb-ren-list').innerHTML = topRen.map((a, i) => {
-                    const pct = Math.round((agentLB[a].ytdRen / agentLB[a].ytdBase)*100);
-                    return `<div class="flex justify-between items-center text-xs pb-1.5 border-b border-slate-50 last:border-0"><span class="font-medium text-slate-700 truncate"><span class="text-slate-400 mr-1">#${i+1}</span>${a}</span><div class="text-right"><span class="font-bold text-emerald-600">${pct}%</span></div></div>`;
-                }).join('');
-            } else {
-                lbSection.classList.add('hidden');
-                lbSection.classList.remove('grid');
-            }
+                    document.getElementById('lb-ytd-gwp').innerHTML = tYtdGwp.map((a, i) => `<div class="flex justify-between items-center text-[11px] pb-1.5 border-b border-slate-50 last:border-0"><span class="font-medium text-slate-700 truncate"><span class="text-slate-400 mr-1">#${i+1}</span>${a}</span><span class="font-bold text-blue-600">₹${agentLB[a].ytdGWP.toLocaleString('en-IN', {maximumFractionDigits:0})}</span></div>`).join('');
+                    document.getElementById('lb-ytd-nop').innerHTML = tYtdNop.map((a, i) => `<div class="flex justify-between items-center text-[11px] pb-1.5 border-b border-slate-50 last:border-0"><span class="font-medium text-slate-700 truncate"><span class="text-slate-400 mr-1">#${i+1}</span>${a}</span><span class="font-bold text-amber-500">${agentLB[a].ytdNOP}</span></div>`).join('');
+                    document.getElementById('lb-mtd-gwp').innerHTML = tMtdGwp.map((a, i) => `<div class="flex justify-between items-center text-[11px] pb-1.5 border-b border-slate-50 last:border-0"><span class="font-medium text-slate-700 truncate"><span class="text-slate-400 mr-1">#${i+1}</span>${a}</span><span class="font-bold text-blue-600">₹${agentLB[a].mtdGWP.toLocaleString('en-IN', {maximumFractionDigits:0})}</span></div>`).join('');
+                    document.getElementById('lb-mtd-nop').innerHTML = tMtdNop.map((a, i) => `<div class="flex justify-between items-center text-[11px] pb-1.5 border-b border-slate-50 last:border-0"><span class="font-medium text-slate-700 truncate"><span class="text-slate-400 mr-1">#${i+1}</span>${a}</span><span class="font-bold text-amber-500">${agentLB[a].mtdNOP}</span></div>`).join('');
+                } else {
+                    freshLB.classList.add('hidden'); renLB.classList.remove('hidden');
+                    const tYtdRen = Object.keys(agentLB).filter(a => agentLB[a].ytdBase >= 5).sort((a,b) => (agentLB[b].ytdRen/agentLB[b].ytdBase) - (agentLB[a].ytdRen/agentLB[a].ytdBase)).slice(0, 3);
+                    const tMtdRen = Object.keys(agentLB).filter(a => agentLB[a].mtdBase >= 1).sort((a,b) => (agentLB[b].mtdRen/agentLB[b].mtdBase) - (agentLB[a].mtdRen/agentLB[a].mtdBase)).slice(0, 3);
+
+                    document.getElementById('lb-ytd-ren').innerHTML = tYtdRen.map((a, i) => `<div class="flex justify-between items-center text-[11px] pb-1.5 border-b border-slate-50 last:border-0"><span class="font-medium text-slate-700 truncate"><span class="text-slate-400 mr-1">#${i+1}</span>${a}</span><span class="font-bold text-emerald-600">${Math.round((agentLB[a].ytdRen/agentLB[a].ytdBase)*100)}%</span></div>`).join('');
+                    document.getElementById('lb-mtd-ren').innerHTML = tMtdRen.map((a, i) => `<div class="flex justify-between items-center text-[11px] pb-1.5 border-b border-slate-50 last:border-0"><span class="font-medium text-slate-700 truncate"><span class="text-slate-400 mr-1">#${i+1}</span>${a}</span><span class="font-bold text-emerald-600">${Math.round((agentLB[a].mtdRen/agentLB[a].mtdBase)*100)}%</span></div>`).join('');
+                }
+            } else { freshLB.classList.add('hidden'); renLB.classList.add('hidden'); }
 
             renderSummary(totalFreshAmt, totalFreshNOP, prevFreshAmt, prevFreshNOP, totalBaseNOP, totalRenewed, totalMissed, totalYet, prevBaseNOP, prevRenewed);
             renderGrid(fyData);
@@ -967,8 +919,7 @@
 
             const breakdownSection = document.getElementById('fresh-breakdowns');
             if (state.main === 'fresh') {
-                breakdownSection.classList.remove('hidden');
-                breakdownSection.classList.add('grid');
+                breakdownSection.classList.remove('hidden'); breakdownSection.classList.add('grid');
                 
                 const prodHtml = Object.keys(productBreakdown).sort((a,b) => productBreakdown[b].prem - productBreakdown[a].prem).map(p => `
                     <div class="flex justify-between items-center text-xs pb-3 border-b border-slate-50 last:border-0">
@@ -989,10 +940,7 @@
                         </div>
                     </div>`).join('');
                 document.getElementById('si-list').innerHTML = siHtml || '<p class="text-xs text-slate-400">No data found</p>';
-            } else {
-                breakdownSection.classList.add('hidden');
-                breakdownSection.classList.remove('grid');
-            }
+            } else { breakdownSection.classList.add('hidden'); breakdownSection.classList.remove('grid'); }
         }
 
         function renderSummary(tFreshAmt, tFreshNOP, pFreshAmt, pFreshNOP, tBase, tRenewed, tMissed, tYet, pBase, pRenewed) {
@@ -1071,29 +1019,19 @@
                                 <span class="text-blue-600 text-[10px] font-bold bg-blue-50 px-1.5 py-0.5 rounded group-hover:bg-blue-100 transition-colors">${data.freshNOP} NOP</span>
                             </div>
                             <div class="text-sm font-extrabold text-slate-800 truncate tracking-tight">₹${data.freshAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
-                            <div class="mt-2 text-[9px] text-slate-400 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center font-semibold">View Drill-down <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg></div>
                         </div>
                     </div>`;
                 } else {
-                    const badge = data.isFuture 
-                        ? `<span class="bg-amber-50 text-amber-600 text-[9px] font-bold px-1.5 py-0.5 rounded group-hover:bg-amber-100">Future</span>`
-                        : ``;
-
+                    const badge = data.isFuture ? `<span class="bg-amber-50 text-amber-600 text-[9px] font-bold px-1.5 py-0.5 rounded group-hover:bg-amber-100">Future</span>` : ``;
                     html += `
                     <div class="bg-white rounded-xl border border-slate-100 p-4 stat-card group relative" onclick="openDrillDown(${index})">
                         <div class="absolute inset-0 bg-slate-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl z-0"></div>
                         <div class="relative z-10">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-xs font-bold text-slate-400 uppercase group-hover:text-slate-600 transition-colors">${monthName}</span>
-                                ${badge}
-                            </div>
+                            <div class="flex justify-between items-center mb-2"><span class="text-xs font-bold text-slate-400 uppercase group-hover:text-slate-600 transition-colors">${monthName}</span>${badge}</div>
                             <div class="text-[10px] font-semibold text-slate-500 mb-2">Base: <span class="text-slate-800 font-bold">${data.baseNOP}</span></div>
                             <div class="space-y-1 mt-2 pt-2 border-t border-slate-50">
                                 <div class="flex justify-between text-[11px]"><span class="text-slate-500">Renewed</span><span class="text-emerald-600 font-bold">${data.renRenewed}</span></div>
-                                ${data.isFuture 
-                                    ? `<div class="flex justify-between text-[11px]"><span class="text-amber-500">Pending</span><span class="text-amber-500 font-bold">${data.yetToRenew}</span></div>` 
-                                    : `<div class="flex justify-between text-[11px]"><span class="text-slate-500">Missed</span><span class="text-rose-500 font-bold">${data.renMissed}</span></div>`
-                                }
+                                ${data.isFuture ? `<div class="flex justify-between text-[11px]"><span class="text-amber-500">Pending</span><span class="text-amber-500 font-bold">${data.yetToRenew}</span></div>` : `<div class="flex justify-between text-[11px]"><span class="text-slate-500">Missed</span><span class="text-rose-500 font-bold">${data.renMissed}</span></div>`}
                             </div>
                         </div>
                     </div>`;
