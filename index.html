@@ -8,7 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- HTML to PDF Library (Bundles html2canvas internally) -->
+    <!-- HTML to PDF Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
@@ -32,8 +32,12 @@
         
         select { -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer; }
 
+        /* Print formatting to eliminate blank pages & artifacts */
         @media print {
-            .no-print { display: none !important; }
+            body { height: auto !important; overflow: visible !important; background-color: #fff !important; }
+            .print\:hidden { display: none !important; }
+            .print-no-shadow { box-shadow: none !important; }
+            .break-inside-avoid { page-break-inside: avoid; break-inside: avoid; }
             #export-container { width: 100%; }
         }
         
@@ -43,7 +47,7 @@
         .rank-3 { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border: 2px solid #fcd34d; }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden selection:bg-blue-100 selection:text-blue-900">
+<body class="h-screen flex flex-col overflow-hidden selection:bg-blue-100 selection:text-blue-900" id="main-body">
 
     <!-- UPLOAD OVERLAY -->
     <div id="upload-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[70] hidden p-4">
@@ -64,7 +68,7 @@
             <div class="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50">
                 <div>
                     <h2 class="text-lg font-bold text-slate-800" id="modal-title">Month Details</h2>
-                    <p class="text-xs font-semibold text-slate-500" id="modal-subtitle">Policy Breakdown</p>
+                    <p class="text-xs font-semibold text-slate-500">Policy Breakdown</p>
                 </div>
                 <button onclick="closeModal()" class="p-2 bg-white hover:bg-slate-200 rounded-full text-slate-500 transition shadow-sm border border-slate-200">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -82,9 +86,7 @@
                             <th class="p-3 text-[10px] font-bold text-slate-500 uppercase text-right">GWP / Status</th>
                         </tr>
                     </thead>
-                    <tbody id="modal-table-body" class="divide-y divide-slate-100">
-                        <!-- Rows injected via JS -->
-                    </tbody>
+                    <tbody id="modal-table-body" class="divide-y divide-slate-100"></tbody>
                 </table>
             </div>
         </div>
@@ -95,7 +97,6 @@
         <div class="z-10 mb-10 text-center slide-up">
             <h1 class="text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight">Performance <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Portal</span></h1>
         </div>
-        
         <div class="z-10 max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-5 w-full slide-up" style="animation-delay: 0.1s;">
             <button onclick="navToRole('fresh')" class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-lg transition-all transform hover:-translate-y-1 border border-slate-100 group flex flex-col items-center text-center">
                 <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
@@ -110,7 +111,7 @@
                 <h2 class="text-lg font-bold text-slate-800">Renewal Performance</h2>
             </button>
             <button onclick="navToRole('ranking')" class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-lg transition-all transform hover:-translate-y-1 border border-amber-100 group flex flex-col items-center text-center relative overflow-hidden">
-                <div class="absolute -top-6 -right-6 w-20 h-20 bg-amber-50 rounded-full z-0"></div>
+                <div class="absolute -top-6 -right-6 w-20 h-20 bg-amber-50 rounded-full z-0 print:hidden"></div>
                 <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-amber-500 group-hover:text-white transition-colors relative z-10">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
                 </div>
@@ -130,7 +131,6 @@
             <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight" id="role-title">Select Module</h1>
         </div>
         
-        <!-- Standard Roles -->
         <div id="role-standard" class="z-10 max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 w-full slide-up">
             <button onclick="navToDashboard('agent')" class="bg-white p-5 rounded-2xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1 border border-slate-100 group flex flex-col items-center">
                 <div class="w-12 h-12 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center mb-3 group-hover:bg-blue-600 group-hover:text-white transition-colors">
@@ -152,7 +152,6 @@
             </button>
         </div>
 
-        <!-- Ranking Roles -->
         <div id="role-ranking" class="z-10 max-w-2xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 w-full hidden slide-up">
             <button onclick="navToDashboard('gwp_rank')" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1 border border-amber-100 group flex flex-col items-center">
                 <div class="w-14 h-14 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center mb-3 group-hover:bg-amber-500 group-hover:text-white transition-colors">
@@ -172,11 +171,11 @@
     <!-- VIEW 3: DASHBOARD / RANKING -->
     <div id="view-dashboard" class="hidden flex-1 flex flex-col h-full bg-slate-50 fade-in">
         
-        <header class="glass-panel sticky top-0 z-30">
+        <header class="glass-panel sticky top-0 z-30 print:hidden">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between items-center h-14">
                     <div class="flex items-center">
-                        <button onclick="showView('view-role')" class="mr-3 p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors no-print">
+                        <button onclick="showView('view-role')" class="mr-3 p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                         </button>
                         <div class="flex items-center space-x-2">
@@ -186,12 +185,11 @@
                         </div>
                     </div>
                     
-                    <!-- Universal Export Actions -->
-                    <div class="flex space-x-2 no-print">
-                        <button id="btn-export-pdf" onclick="exportPDF()" class="flex items-center bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm">
+                    <div class="flex space-x-2">
+                        <button onclick="exportPDF()" class="flex items-center bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm">
                             <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Export PDF
                         </button>
-                        <button id="btn-export-wa" onclick="shareToWhatsapp(this)" class="flex items-center bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm">
+                        <button onclick="shareToWhatsapp(this)" class="flex items-center bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm">
                             <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg> Share WA
                         </button>
                     </div>
@@ -199,7 +197,7 @@
             </div>
         </header>
 
-        <div class="bg-white border-b border-slate-200 shadow-sm z-20 no-print">
+        <div class="bg-white border-b border-slate-200 shadow-sm z-20 print:hidden">
             <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8">
                 <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full" id="filter-bar">
                     
@@ -236,7 +234,7 @@
 
         <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative" id="main-scroll-area">
             
-            <div id="empty-state" class="flex flex-col items-center justify-center h-full min-h-[250px] text-center slide-up no-print">
+            <div id="empty-state" class="flex flex-col items-center justify-center h-full min-h-[250px] text-center slide-up print:hidden">
                 <p class="text-slate-400 font-medium text-xs">Select mandatory filters above to load data.</p>
             </div>
 
@@ -266,7 +264,7 @@
                         <div class="xl:col-span-2 space-y-4">
                             <div id="fy-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"></div>
                         </div>
-                        <div class="xl:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col h-[350px] xl:h-auto">
+                        <div class="xl:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col h-[350px] xl:h-auto print-no-shadow">
                             <h2 class="text-sm font-bold text-slate-800 mb-3">Annual Trend</h2>
                             <div class="relative flex-1 w-full min-h-[200px]">
                                 <canvas id="performanceChart"></canvas>
@@ -274,7 +272,7 @@
                         </div>
                     </div>
 
-                    <!-- CLUSTER LEADERBOARDS -->
+                    <!-- CLUSTER/MANAGER LEADERBOARDS -->
                     <div id="cluster-leaderboard-fresh" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
                         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-blue-600">Top 3 YTD GWP</h2><div id="lb-ytd-gwp" class="space-y-2.5"></div></div>
                         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-amber-500">Top 3 YTD NOP</h2><div id="lb-ytd-nop" class="space-y-2.5"></div></div>
@@ -289,18 +287,18 @@
 
                     <!-- FRESH BREAKDOWNS -->
                     <div id="fresh-breakdowns" class="hidden grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5 break-inside-avoid">
                             <h2 class="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100">Product Wise Performance</h2>
-                            <div id="product-list" class="space-y-3 max-h-56 overflow-y-auto pr-2"></div>
+                            <div id="product-list" class="space-y-3 max-h-56 overflow-y-auto pr-2 scroll-area"></div>
                         </div>
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5 break-inside-avoid">
                             <h2 class="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100">Sum Insured Wise</h2>
-                            <div id="si-list" class="space-y-3 max-h-56 overflow-y-auto pr-2"></div>
+                            <div id="si-list" class="space-y-3 max-h-56 overflow-y-auto pr-2 scroll-area"></div>
                         </div>
                     </div>
                     
                     <!-- PERSISTENCY TRACKER (Renewal) -->
-                    <div id="persistency-tracker" class="hidden bg-white rounded-xl shadow-sm border border-slate-100 p-5 mt-2">
+                    <div id="persistency-tracker" class="hidden bg-white rounded-xl shadow-sm border border-slate-100 p-5 mt-2 break-inside-avoid">
                         <h2 class="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center justify-between">
                             Historical Retention Tracker
                             <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase">Proxy Calculation</span>
@@ -311,17 +309,20 @@
 
                 <!-- 2. RANKING BOARD UI -->
                 <div class="max-w-3xl mx-auto hidden slide-up pb-10" id="ranking-board-content">
-                    <div class="bg-white rounded-[2rem] shadow-xl border-[0.4rem] border-slate-100 overflow-hidden relative print:border-none print:shadow-none">
+                    <div class="bg-white rounded-[2rem] shadow-xl border border-slate-100 overflow-hidden relative print-no-shadow print:border-slate-200">
                         <!-- Decorative Header -->
-                        <div class="h-36 bg-gradient-to-br from-slate-900 to-slate-800 absolute top-0 left-0 w-full z-0"></div>
-                        <div class="absolute top-0 right-0 w-56 h-56 bg-amber-500 rounded-full blur-3xl opacity-20 z-0"></div>
+                        <div class="h-36 bg-gradient-to-br from-slate-900 to-slate-800 absolute top-0 left-0 w-full z-0 print:hidden"></div>
+                        <div class="absolute top-0 right-0 w-56 h-56 bg-amber-500 rounded-full blur-3xl opacity-20 z-0 print:hidden"></div>
                         
-                        <div class="relative z-10 p-8 text-center border-b border-slate-100/10">
+                        <!-- Print Fallback Header -->
+                        <div class="h-32 bg-slate-800 absolute top-0 left-0 w-full z-0 hidden print:block"></div>
+                        
+                        <div class="relative z-10 p-8 text-center border-b border-slate-100/10 print:border-slate-700">
                             <h1 class="text-3xl font-black text-white tracking-tight mb-2 uppercase" id="rb-title">Monthly Ranking</h1>
                             <p class="text-slate-300 font-semibold text-sm" id="rb-subtitle">Month Year</p>
                         </div>
                         
-                        <div class="p-6 bg-slate-50/50">
+                        <div class="p-6 bg-slate-50/50 print:bg-white">
                             <div class="flex justify-between items-center px-4 pb-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200 mb-4">
                                 <span>Agent & Manager</span>
                                 <span id="rb-metric-label">Score</span>
@@ -355,7 +356,7 @@
         let chartInstance = null;
         let state = { main: null, sub: null, selectedYear: null, selectedName: null, selectedMonth: null };
 
-        // Helper to proper title case strings
+        // Unified Naming Format (Title Case)
         function toTitleCase(str) {
             if (!str) return '';
             return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
@@ -499,7 +500,7 @@
                     }
                     const names = [...new Set(filteredData.map(row => row[colKey]).filter(n => n))].sort();
                     const currentVal = nameSelect.value;
-                    nameSelect.innerHTML = '<option value="">Select Target Name</option>' + names.map(n => `<option value="${n}">${toTitleCase(n)}</option>`).join('');
+                    nameSelect.innerHTML = '<option value="">Select Target Name</option>' + names.map(n => `<option value="${toTitleCase(n)}">${toTitleCase(n)}</option>`).join('');
                     if(names.includes(currentVal)) nameSelect.value = currentVal;
                 }
                 renderDashboard();
@@ -524,81 +525,104 @@
             return `<span class="bg-slate-100 text-slate-500 text-[9px] px-1.5 py-0.5 rounded ml-2 font-bold shadow-sm">-</span>`;
         }
 
-        // === UNIVERSAL PDF EXPORT ===
+        // Helper to un-constrain scrolling areas before PDF Capture
+        function prepareForPDF() {
+            document.getElementById('main-body').classList.remove('h-screen', 'overflow-hidden');
+            const scrolls = document.querySelectorAll('.scroll-area');
+            scrolls.forEach(el => { el.classList.remove('max-h-56', 'overflow-y-auto'); });
+            document.querySelectorAll('.stat-card').forEach(el => { el.style.transform = 'none'; el.style.boxShadow = 'none'; });
+        }
+
+        // Restore formatting after PDF capture
+        function restoreAfterPDF() {
+            document.getElementById('main-body').classList.add('h-screen', 'overflow-hidden');
+            const scrolls = document.querySelectorAll('.scroll-area');
+            scrolls.forEach(el => { el.classList.add('max-h-56', 'overflow-y-auto'); });
+            document.querySelectorAll('.stat-card').forEach(el => el.style = '');
+        }
+
+        // === PDF EXPORT ===
         async function exportPDF() {
             const btnObj = document.getElementById('btn-export-pdf');
             const originalHTML = btnObj.innerHTML;
             btnObj.innerHTML = `<svg class="w-3.5 h-3.5 mr-1.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Exporting...`;
             
-            const element = document.getElementById('export-container');
-            const scrolls = element.querySelectorAll('.overflow-y-auto');
-            scrolls.forEach(el => { el.classList.remove('max-h-56', 'overflow-y-auto'); });
+            prepareForPDF();
             
             const isRanking = state.main === 'ranking';
             let filename = `${state.main.toUpperCase()}_${state.sub.toUpperCase()}_FY${state.selectedYear}`;
             const dateStr = new Date().toISOString().split('T')[0];
             
             if (state.sub === 'agent' && state.selectedName) {
-                filename = `${toTitleCase(state.selectedName).replace(/\s+/g, '_')}_Report_${dateStr}`;
+                filename = `${state.selectedName.replace(/\s+/g, '_')}_Report_${dateStr}`;
             } else if (isRanking) {
                 filename = `Agent_Ranking_${FY_MONTHS[state.selectedMonth]}_${state.selectedYear}`;
             }
             
             const opt = {
                 margin: 0.3, filename: `${filename}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } 
+                image: { type: 'jpeg', quality: 1.0 },
+                html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
             };
             
-            document.querySelectorAll('.stat-card').forEach(el => { el.style.transform = 'none'; el.style.boxShadow = 'none'; });
-            
+            const element = document.getElementById('export-container');
             await html2pdf().set(opt).from(element).save();
             
-            document.querySelectorAll('.stat-card').forEach(el => el.style = '');
-            scrolls.forEach(el => { el.classList.add('max-h-56', 'overflow-y-auto'); });
+            restoreAfterPDF();
             btnObj.innerHTML = originalHTML;
         }
 
         // === PDF WHATSAPP SHARE ===
         async function shareToWhatsapp(btnObj) {
             const originalHTML = btnObj.innerHTML;
-            btnObj.innerHTML = `<svg class="w-4 h-4 mr-1.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating PDF...`;
+            btnObj.innerHTML = `<svg class="w-4 h-4 mr-1.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating...`;
+            
+            prepareForPDF();
             
             const element = document.getElementById('export-container');
-            const scrolls = element.querySelectorAll('.overflow-y-auto');
-            scrolls.forEach(el => { el.classList.remove('max-h-56', 'overflow-y-auto'); });
-            document.querySelectorAll('.stat-card').forEach(el => { el.style.transform = 'none'; el.style.boxShadow = 'none'; });
-            
             const opt = {
                 margin: 0.3, filename: 'temp.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
+                image: { type: 'jpeg', quality: 1.0 },
                 html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } 
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
             };
 
             try {
                 const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
-                
-                document.querySelectorAll('.stat-card').forEach(el => el.style = '');
-                scrolls.forEach(el => { el.classList.add('max-h-56', 'overflow-y-auto'); });
+                restoreAfterPDF();
 
                 const dateStr = new Date().toISOString().split('T')[0];
                 const isRanking = state.main === 'ranking';
                 
                 let filename = `Report_${dateStr}.pdf`;
                 let msgTitle = "Performance Report";
+                let top3Text = "";
                 
                 if (state.sub === 'agent' && state.selectedName) { 
-                    filename = `${toTitleCase(state.selectedName).replace(/\s+/g, '_')}_${dateStr}.pdf`; 
-                    msgTitle = `${toTitleCase(state.selectedName)} Dashboard`; 
+                    filename = `${state.selectedName.replace(/\s+/g, '_')}_${dateStr}.pdf`; 
+                    msgTitle = `${state.selectedName} Dashboard`; 
                 } else if (isRanking) { 
                     filename = `Ranking_${FY_MONTHS[state.selectedMonth]}_FY${state.selectedYear}.pdf`; 
                     msgTitle = `Agent Rankings - ${FY_MONTHS[state.selectedMonth]} FY${state.selectedYear}`; 
+                    
+                    // Generate Top 3 Text for WA Message dynamically from DOM
+                    const listItems = document.getElementById('rb-list').children;
+                    if (listItems.length > 0) {
+                        top3Text = "\n\n*Top Performers:*\n";
+                        for (let i = 0; i < Math.min(3, listItems.length); i++) {
+                            const name = listItems[i].querySelector('.font-bold.text-slate-800').innerText;
+                            const score = listItems[i].querySelector('.text-right .font-black').innerText;
+                            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
+                            top3Text += `${medal} ${name} - ${score}\n`;
+                        }
+                    }
                 }
                 
                 const file = new File([pdfBlob], filename, { type: 'application/pdf' });
-                const textMsg = `📊 *${msgTitle}*\nPlease find the detailed report attached.`;
+                const textMsg = `🏆 *${msgTitle}* 🏆${top3Text}\n\n📄 _Please find the detailed PDF report attached._`;
                 
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     try { await navigator.share({ title: msgTitle, text: textMsg, files: [file] }); } 
@@ -606,9 +630,7 @@
                 } else {
                     fallbackDownload(URL.createObjectURL(pdfBlob), filename, textMsg);
                 }
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
             btnObj.innerHTML = originalHTML;
         }
 
@@ -636,8 +658,8 @@
 
                 if (rowFyMonthIndex !== monthIndex) return false;
                 
-                if (state.sub === 'agent' && row[COL_AGENT] !== state.selectedName) return false;
-                if (state.sub === 'manager' && row[COL_MANAGER] !== state.selectedName) return false;
+                if (state.sub === 'agent' && toTitleCase(row[COL_AGENT]) !== state.selectedName) return false;
+                if (state.sub === 'manager' && toTitleCase(row[COL_MANAGER]) !== state.selectedName) return false;
 
                 const tType = (row[COL_TRANSACTION] || '').toString().toLowerCase();
                 const isFreshBaseTx = tType.includes('fresh') || tType.includes('roll over');
@@ -661,7 +683,7 @@
                     const sign = isCancel ? '-' : '';
 
                     return `
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr class="hover:bg-slate-50 transition-colors break-inside-avoid">
                         <td class="p-3 text-[11px] font-medium text-slate-600 whitespace-nowrap">${dateStr}</td>
                         <td class="p-3 text-[11px] font-bold text-slate-800 whitespace-nowrap">${p[COL_POLICY] || 'N/A'}</td>
                         <td class="p-3 text-[11px] font-medium text-slate-600 truncate max-w-[150px]" title="${toTitleCase(p[COL_INSURED])}">${toTitleCase(p[COL_INSURED]) || 'Unknown'}</td>
@@ -727,10 +749,10 @@
             sorted.sort((a, b) => {
                 if (state.sub === 'gwp_rank') {
                     if (agents[b].gwp !== agents[a].gwp) return agents[b].gwp - agents[a].gwp;
-                    return agents[b].nop - agents[a].nop; // Tie breaker
+                    return agents[b].nop - agents[a].nop; 
                 } else {
                     if (agents[b].nop !== agents[a].nop) return agents[b].nop - agents[a].nop;
-                    return agents[b].gwp - agents[a].gwp; // Tie breaker
+                    return agents[b].gwp - agents[a].gwp;
                 }
             });
 
@@ -752,7 +774,7 @@
                     : `${agents[agent].nop} NOP`;
 
                 return `
-                <div class="flex items-center p-3 rounded-xl shadow-sm border bg-white border-slate-100 mb-3">
+                <div class="flex items-center p-3 rounded-xl shadow-sm border bg-white border-slate-100 mb-3 break-inside-avoid">
                     <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm ${rankClass} shadow-sm shrink-0">${medal}</div>
                     <div class="ml-4 flex-1 truncate pr-4">
                         <div class="font-bold text-slate-800 text-sm truncate">${agent}</div>
@@ -778,11 +800,11 @@
             document.getElementById('dashboard-content').classList.remove('hidden');
 
             if (state.sub === 'agent') {
-                const agentRow = rawData.find(r => r[COL_AGENT] === state.selectedName);
+                const agentRow = rawData.find(r => toTitleCase(r[COL_AGENT]) === state.selectedName);
                 if (agentRow) {
                     document.getElementById('agent-profile').classList.remove('hidden');
                     document.getElementById('agent-profile').classList.add('flex');
-                    document.getElementById('agent-name-display').innerText = toTitleCase(state.selectedName);
+                    document.getElementById('agent-name-display').innerText = state.selectedName;
                     document.getElementById('agent-initials').innerText = state.selectedName.substring(0, 2).toUpperCase();
                     document.getElementById('agent-imd').innerText = agentRow[COL_IMD_CODE] || 'N/A';
                     document.getElementById('agent-agreement').innerText = agentRow[COL_AGR_CODE] || 'N/A';
@@ -823,13 +845,16 @@
                 const isRenewalTx = tType.includes('our renewal');
                 const isCancelTx = tType.includes('cancel'); 
 
-                if (state.sub === 'cluster') {
+                if (state.sub === 'cluster' || state.sub === 'manager') {
                     if(!agentLB[agent]) agentLB[agent] = { ytdGWP:0, ytdNOP:0, mtdGWP:0, mtdNOP:0, ytdBase:0, ytdRen:0, mtdBase:0, mtdRen:0 };
                 }
 
                 const passesFilter = (state.sub === 'cluster' || 
-                                     (state.sub === 'agent' && row[COL_AGENT] === state.selectedName) || 
-                                     (state.sub === 'manager' && row[COL_MANAGER] === state.selectedName));
+                                     (state.sub === 'agent' && toTitleCase(row[COL_AGENT]) === state.selectedName) || 
+                                     (state.sub === 'manager' && toTitleCase(row[COL_MANAGER]) === state.selectedName));
+
+                // If Manager view, only populate LB with agents under this manager
+                const passesLBFilter = state.sub === 'cluster' || (state.sub === 'manager' && toTitleCase(row[COL_MANAGER]) === state.selectedName);
 
                 if (state.main === 'fresh') {
                     if (rowFY === state.selectedYear) {
@@ -837,7 +862,7 @@
                         if (isFreshBaseTx) { finalNop = 1; finalPrem = premium; } 
                         else if (isCancelTx) { finalNop = -1; finalPrem = premium > 0 ? -Math.abs(premium) : premium; }
                         
-                        if (state.sub === 'cluster' && finalNop !== 0) {
+                        if (passesLBFilter && finalNop !== 0) {
                             agentLB[agent].ytdGWP += finalPrem;
                             agentLB[agent].ytdNOP += finalNop;
                             if (year === currentYear && month === currentMonth) {
@@ -870,7 +895,7 @@
                     }
                 } 
                 else if (state.main === 'renewal') {
-                    if (state.sub === 'cluster') {
+                    if (passesLBFilter) {
                         if (rowFY === (state.selectedYear - 1) && (isFreshBaseTx || isRenewalTx)) {
                             agentLB[agent].ytdBase += 1;
                             if (year === (currentYear - 1) && month === currentMonth) agentLB[agent].mtdBase += 1;
@@ -911,11 +936,11 @@
                 const yr1Pct = retentionYr1Base > 0 ? Math.round((retentionYr1Ren/retentionYr1Base)*100) : 0;
                 const yr2Pct = retentionYr2Base > 0 ? Math.round((retentionYr2Ren/retentionYr2Base)*100) : 0;
                 document.getElementById('persistency-stats').innerHTML = `
-                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 flex justify-between items-center">
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 flex justify-between items-center break-inside-avoid">
                         <div><div class="text-[10px] font-bold text-slate-400 uppercase">1st Yr Retention (13M Proxy)</div><div class="text-lg font-black text-slate-800">${yr1Pct}%</div></div>
                         <div class="text-right"><div class="text-[10px] text-slate-500 font-medium">Base: ${retentionYr1Base}</div><div class="text-[10px] text-emerald-600 font-bold">Renewed: ${retentionYr1Ren}</div></div>
                     </div>
-                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 flex justify-between items-center">
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 flex justify-between items-center break-inside-avoid">
                         <div><div class="text-[10px] font-bold text-slate-400 uppercase">2nd Yr Retention (25M Proxy)</div><div class="text-lg font-black text-slate-800">${yr2Pct}%</div></div>
                         <div class="text-right"><div class="text-[10px] text-slate-500 font-medium">Base: ${retentionYr2Base}</div><div class="text-[10px] text-emerald-600 font-bold">Renewed: ${retentionYr2Ren}</div></div>
                     </div>
@@ -925,7 +950,7 @@
             const freshLB = document.getElementById('cluster-leaderboard-fresh');
             const renLB = document.getElementById('cluster-leaderboard-renewal');
             
-            if (state.sub === 'cluster') {
+            if (state.sub === 'cluster' || state.sub === 'manager') {
                 if (state.main === 'fresh') {
                     freshLB.classList.remove('hidden'); renLB.classList.add('hidden');
                     const tYtdGwp = Object.keys(agentLB).sort((a,b) => agentLB[b].ytdGWP - agentLB[a].ytdGWP).slice(0, 3);
@@ -956,7 +981,7 @@
                 breakdownSection.classList.remove('hidden'); breakdownSection.classList.add('grid');
                 
                 const prodHtml = Object.keys(productBreakdown).sort((a,b) => productBreakdown[b].prem - productBreakdown[a].prem).map(p => `
-                    <div class="flex justify-between items-center text-xs pb-3 border-b border-slate-50 last:border-0">
+                    <div class="flex justify-between items-center text-xs pb-3 border-b border-slate-50 last:border-0 break-inside-avoid">
                         <span class="font-medium text-slate-700 truncate pr-2 w-1/2" title="${p}">${p}</span>
                         <div class="text-right w-1/2">
                             <div class="font-bold text-slate-800 tracking-tight">₹${productBreakdown[p].prem.toLocaleString('en-IN', {maximumFractionDigits:0})} <span class="text-[9px] text-slate-400 font-normal">GWP</span></div>
@@ -966,7 +991,7 @@
                 document.getElementById('product-list').innerHTML = prodHtml || '<p class="text-xs text-slate-400">No data found</p>';
 
                 const siHtml = Object.keys(siBreakdown).sort((a,b) => siBreakdown[b].prem - siBreakdown[a].prem).map(s => `
-                    <div class="flex justify-between items-center text-xs pb-3 border-b border-slate-50 last:border-0">
+                    <div class="flex justify-between items-center text-xs pb-3 border-b border-slate-50 last:border-0 break-inside-avoid">
                         <span class="font-medium text-slate-700 w-1/2">${formatSumInsured(s)}</span>
                         <div class="text-right w-1/2">
                             <div class="font-bold text-slate-800 tracking-tight">₹${siBreakdown[s].prem.toLocaleString('en-IN', {maximumFractionDigits:0})} <span class="text-[9px] text-slate-400 font-normal">GWP</span></div>
@@ -1053,14 +1078,11 @@
                                 <span class="text-blue-600 text-[10px] font-bold bg-blue-50 px-1.5 py-0.5 rounded group-hover:bg-blue-100 transition-colors">${data.freshNOP} NOP</span>
                             </div>
                             <div class="text-sm font-extrabold text-slate-800 truncate tracking-tight">₹${data.freshAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
-                            <div class="mt-2 text-[9px] text-slate-400 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center font-semibold">View Drill-down <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg></div>
+                            <div class="mt-2 text-[9px] text-slate-400 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center font-semibold">View Details <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg></div>
                         </div>
                     </div>`;
                 } else {
-                    const badge = data.isFuture 
-                        ? `<span class="bg-amber-50 text-amber-600 text-[9px] font-bold px-1.5 py-0.5 rounded group-hover:bg-amber-100">Future</span>`
-                        : ``;
-
+                    const badge = data.isFuture ? `<span class="bg-amber-50 text-amber-600 text-[9px] font-bold px-1.5 py-0.5 rounded group-hover:bg-amber-100">Future</span>` : ``;
                     html += `
                     <div class="bg-white rounded-xl border border-slate-100 p-4 stat-card group relative" onclick="openDrillDown(${index})">
                         <div class="absolute inset-0 bg-slate-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl z-0"></div>
@@ -1072,10 +1094,7 @@
                             <div class="text-[10px] font-semibold text-slate-500 mb-2">Base: <span class="text-slate-800 font-bold">${data.baseNOP}</span></div>
                             <div class="space-y-1 mt-2 pt-2 border-t border-slate-50">
                                 <div class="flex justify-between text-[11px]"><span class="text-slate-500">Renewed</span><span class="text-emerald-600 font-bold">${data.renRenewed}</span></div>
-                                ${data.isFuture 
-                                    ? `<div class="flex justify-between text-[11px]"><span class="text-amber-500">Pending</span><span class="text-amber-500 font-bold">${data.yetToRenew}</span></div>` 
-                                    : `<div class="flex justify-between text-[11px]"><span class="text-slate-500">Missed</span><span class="text-rose-500 font-bold">${data.renMissed}</span></div>`
-                                }
+                                ${data.isFuture ? `<div class="flex justify-between text-[11px]"><span class="text-amber-500">Pending</span><span class="text-amber-500 font-bold">${data.yetToRenew}</span></div>` : `<div class="flex justify-between text-[11px]"><span class="text-slate-500">Missed</span><span class="text-rose-500 font-bold">${data.renMissed}</span></div>`}
                             </div>
                         </div>
                     </div>`;
