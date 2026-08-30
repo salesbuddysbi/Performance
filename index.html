@@ -7,8 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- HTML to PDF Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
@@ -32,13 +30,9 @@
         
         select { -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer; }
 
-        /* Print formatting to eliminate blank pages & artifacts */
         @media print {
-            body { height: auto !important; overflow: visible !important; background-color: #fff !important; }
-            .print\:hidden { display: none !important; }
-            .print-no-shadow { box-shadow: none !important; }
-            .break-inside-avoid { page-break-inside: avoid; break-inside: avoid; }
-            #export-container { width: 100%; }
+            .no-print { display: none !important; }
+            body { height: auto !important; overflow: visible !important; }
         }
         
         /* Ranking Badges */
@@ -131,7 +125,8 @@
             <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight" id="role-title">Select Module</h1>
         </div>
         
-        <div id="role-standard" class="z-10 max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 w-full slide-up">
+        <!-- Standard Roles -->
+        <div id="role-standard" class="z-10 max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 w-full slide-up hidden">
             <button onclick="navToDashboard('agent')" class="bg-white p-5 rounded-2xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1 border border-slate-100 group flex flex-col items-center">
                 <div class="w-12 h-12 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center mb-3 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
@@ -152,6 +147,7 @@
             </button>
         </div>
 
+        <!-- Ranking Roles -->
         <div id="role-ranking" class="z-10 max-w-2xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 w-full hidden slide-up">
             <button onclick="navToDashboard('gwp_rank')" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1 border border-amber-100 group flex flex-col items-center">
                 <div class="w-14 h-14 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center mb-3 group-hover:bg-amber-500 group-hover:text-white transition-colors">
@@ -172,8 +168,8 @@
     <div id="view-dashboard" class="hidden flex-1 flex flex-col h-full bg-slate-50 fade-in">
         
         <header class="glass-panel sticky top-0 z-30 print:hidden">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-14">
+            <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
                     <div class="flex items-center">
                         <button onclick="showView('view-role')" class="mr-3 p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
@@ -186,7 +182,7 @@
                     </div>
                     
                     <div class="flex space-x-2">
-                        <button onclick="exportPDF()" class="flex items-center bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm">
+                        <button onclick="exportPDF(this)" class="flex items-center bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm">
                             <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Export PDF
                         </button>
                         <button onclick="shareToWhatsapp(this)" class="flex items-center bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm">
@@ -198,7 +194,7 @@
         </header>
 
         <div class="bg-white border-b border-slate-200 shadow-sm z-20 print:hidden">
-            <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8">
+            <div class="max-w-[1200px] mx-auto px-4 py-3 sm:px-6 lg:px-8">
                 <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full" id="filter-bar">
                     
                     <div class="relative w-full sm:w-48">
@@ -239,10 +235,10 @@
             </div>
 
             <!-- EXPORT CONTAINER FOR PDF -->
-            <div id="export-container" class="w-full">
+            <div id="export-container" class="w-full mx-auto max-w-[1200px]">
                 
                 <!-- 1. STANDARD DASHBOARD UI -->
-                <div class="max-w-7xl mx-auto space-y-5 hidden slide-up pb-10" id="dashboard-content">
+                <div class="space-y-5 hidden slide-up pb-10" id="dashboard-content">
                     
                     <div id="agent-profile" class="hidden bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div class="flex items-center gap-4">
@@ -274,31 +270,31 @@
 
                     <!-- CLUSTER/MANAGER LEADERBOARDS -->
                     <div id="cluster-leaderboard-fresh" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-blue-600">Top 3 YTD GWP</h2><div id="lb-ytd-gwp" class="space-y-2.5"></div></div>
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-amber-500">Top 3 YTD NOP</h2><div id="lb-ytd-nop" class="space-y-2.5"></div></div>
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-blue-600">Top 3 MTD GWP</h2><div id="lb-mtd-gwp" class="space-y-2.5"></div></div>
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-amber-500">Top 3 MTD NOP</h2><div id="lb-mtd-nop" class="space-y-2.5"></div></div>
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 print-no-shadow"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-blue-600">Top 3 YTD GWP</h2><div id="lb-ytd-gwp" class="space-y-2.5"></div></div>
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 print-no-shadow"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-amber-500">Top 3 YTD NOP</h2><div id="lb-ytd-nop" class="space-y-2.5"></div></div>
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 print-no-shadow"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-blue-600">Top 3 MTD GWP</h2><div id="lb-mtd-gwp" class="space-y-2.5"></div></div>
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 print-no-shadow"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-amber-500">Top 3 MTD NOP</h2><div id="lb-mtd-nop" class="space-y-2.5"></div></div>
                     </div>
 
                     <div id="cluster-leaderboard-renewal" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-emerald-600">Top 3 YTD Retention %</h2><div id="lb-ytd-ren" class="space-y-2.5"></div></div>
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-emerald-600">Top 3 MTD Retention %</h2><div id="lb-mtd-ren" class="space-y-2.5"></div></div>
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 print-no-shadow"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-emerald-600">Top 3 YTD Retention %</h2><div id="lb-ytd-ren" class="space-y-2.5"></div></div>
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 print-no-shadow"><h2 class="text-[10px] font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 uppercase tracking-wider text-emerald-600">Top 3 MTD Retention %</h2><div id="lb-mtd-ren" class="space-y-2.5"></div></div>
                     </div>
 
                     <!-- FRESH BREAKDOWNS -->
                     <div id="fresh-breakdowns" class="hidden grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5 break-inside-avoid">
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5 print-no-shadow">
                             <h2 class="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100">Product Wise Performance</h2>
                             <div id="product-list" class="space-y-3 max-h-56 overflow-y-auto pr-2 scroll-area"></div>
                         </div>
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5 break-inside-avoid">
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5 print-no-shadow">
                             <h2 class="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100">Sum Insured Wise</h2>
                             <div id="si-list" class="space-y-3 max-h-56 overflow-y-auto pr-2 scroll-area"></div>
                         </div>
                     </div>
                     
                     <!-- PERSISTENCY TRACKER (Renewal) -->
-                    <div id="persistency-tracker" class="hidden bg-white rounded-xl shadow-sm border border-slate-100 p-5 mt-2 break-inside-avoid">
+                    <div id="persistency-tracker" class="hidden bg-white rounded-xl shadow-sm border border-slate-100 p-5 mt-2 print-no-shadow">
                         <h2 class="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center justify-between">
                             Historical Retention Tracker
                             <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase">Proxy Calculation</span>
@@ -309,7 +305,7 @@
 
                 <!-- 2. RANKING BOARD UI -->
                 <div class="max-w-3xl mx-auto hidden slide-up pb-10" id="ranking-board-content">
-                    <div class="bg-white rounded-[2rem] shadow-xl border border-slate-100 overflow-hidden relative print-no-shadow print:border-slate-200">
+                    <div class="bg-white rounded-[2rem] shadow-xl border-[0.4rem] border-slate-100 overflow-hidden relative print:border-none print:shadow-none print:rounded-none">
                         <!-- Decorative Header -->
                         <div class="h-36 bg-gradient-to-br from-slate-900 to-slate-800 absolute top-0 left-0 w-full z-0 print:hidden"></div>
                         <div class="absolute top-0 right-0 w-56 h-56 bg-amber-500 rounded-full blur-3xl opacity-20 z-0 print:hidden"></div>
@@ -525,25 +521,33 @@
             return `<span class="bg-slate-100 text-slate-500 text-[9px] px-1.5 py-0.5 rounded ml-2 font-bold shadow-sm">-</span>`;
         }
 
-        // Helper to un-constrain scrolling areas before PDF Capture
+        // Helper to un-constrain scrolling areas and fix widths before PDF Capture
         function prepareForPDF() {
             document.getElementById('main-body').classList.remove('h-screen', 'overflow-hidden');
+            const expContainer = document.getElementById('export-container');
+            expContainer.style.width = '1200px'; 
+            expContainer.style.margin = '0 auto';
+
             const scrolls = document.querySelectorAll('.scroll-area');
-            scrolls.forEach(el => { el.classList.remove('max-h-56', 'overflow-y-auto'); });
+            scrolls.forEach(el => { el.classList.remove('max-h-56', 'overflow-y-auto'); el.style.maxHeight = 'none'; });
             document.querySelectorAll('.stat-card').forEach(el => { el.style.transform = 'none'; el.style.boxShadow = 'none'; });
+            if (chartInstance) chartInstance.options.animation = false;
         }
 
         // Restore formatting after PDF capture
         function restoreAfterPDF() {
             document.getElementById('main-body').classList.add('h-screen', 'overflow-hidden');
+            const expContainer = document.getElementById('export-container');
+            expContainer.style.width = ''; 
+            expContainer.style.margin = '';
+
             const scrolls = document.querySelectorAll('.scroll-area');
-            scrolls.forEach(el => { el.classList.add('max-h-56', 'overflow-y-auto'); });
+            scrolls.forEach(el => { el.classList.add('max-h-56', 'overflow-y-auto'); el.style.maxHeight = ''; });
             document.querySelectorAll('.stat-card').forEach(el => el.style = '');
         }
 
         // === PDF EXPORT ===
-        async function exportPDF() {
-            const btnObj = document.getElementById('btn-export-pdf');
+        async function exportPDF(btnObj) {
             const originalHTML = btnObj.innerHTML;
             btnObj.innerHTML = `<svg class="w-3.5 h-3.5 mr-1.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Exporting...`;
             
@@ -560,9 +564,10 @@
             }
             
             const opt = {
-                margin: 0.3, filename: `${filename}.pdf`,
+                margin: [0.3, 0.3], 
+                filename: `${filename}.pdf`,
                 image: { type: 'jpeg', quality: 1.0 },
-                html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+                html2canvas: { scale: 2, useCORS: true, windowWidth: 1200, backgroundColor: '#f8fafc' },
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
             };
@@ -583,9 +588,9 @@
             
             const element = document.getElementById('export-container');
             const opt = {
-                margin: 0.3, filename: 'temp.pdf',
+                margin: [0.3, 0.3], filename: 'temp.pdf',
                 image: { type: 'jpeg', quality: 1.0 },
-                html2canvas: { scale: 2, useCORS: true },
+                html2canvas: { scale: 2, useCORS: true, windowWidth: 1200, backgroundColor: '#f8fafc' },
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
             };
@@ -602,23 +607,30 @@
                 let top3Text = "";
                 
                 if (state.sub === 'agent' && state.selectedName) { 
-                    filename = `${state.selectedName.replace(/\s+/g, '_')}_${dateStr}.pdf`; 
-                    msgTitle = `${state.selectedName} Dashboard`; 
+                    filename = `${toTitleCase(state.selectedName).replace(/\s+/g, '_')}_${dateStr}.pdf`; 
+                    msgTitle = `${toTitleCase(state.selectedName)} Dashboard`; 
                 } else if (isRanking) { 
                     filename = `Ranking_${FY_MONTHS[state.selectedMonth]}_FY${state.selectedYear}.pdf`; 
                     msgTitle = `Agent Rankings - ${FY_MONTHS[state.selectedMonth]} FY${state.selectedYear}`; 
                     
-                    // Generate Top 3 Text for WA Message dynamically from DOM
                     const listItems = document.getElementById('rb-list').children;
                     if (listItems.length > 0) {
                         top3Text = "\n\n*Top Performers:*\n";
                         for (let i = 0; i < Math.min(3, listItems.length); i++) {
-                            const name = listItems[i].querySelector('.font-bold.text-slate-800').innerText;
-                            const score = listItems[i].querySelector('.text-right .font-black').innerText;
-                            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
-                            top3Text += `${medal} ${name} - ${score}\n`;
+                            const nameEl = listItems[i].querySelector('.font-bold.text-slate-800');
+                            const scoreEl = listItems[i].querySelector('.text-right .font-black');
+                            if(nameEl && scoreEl) {
+                                const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
+                                top3Text += `${medal} ${nameEl.innerText} - ${scoreEl.innerText}\n`;
+                            }
                         }
                     }
+                } else if (state.sub === 'manager' && state.selectedName) {
+                    filename = `${toTitleCase(state.selectedName).replace(/\s+/g, '_')}_Team_${dateStr}.pdf`; 
+                    msgTitle = `${toTitleCase(state.selectedName)} Team Dashboard`;
+                } else {
+                    filename = `Cluster_Dashboard_${dateStr}.pdf`; 
+                    msgTitle = `Cluster Dashboard`;
                 }
                 
                 const file = new File([pdfBlob], filename, { type: 'application/pdf' });
@@ -683,7 +695,7 @@
                     const sign = isCancel ? '-' : '';
 
                     return `
-                    <tr class="hover:bg-slate-50 transition-colors break-inside-avoid">
+                    <tr class="hover:bg-slate-50 transition-colors">
                         <td class="p-3 text-[11px] font-medium text-slate-600 whitespace-nowrap">${dateStr}</td>
                         <td class="p-3 text-[11px] font-bold text-slate-800 whitespace-nowrap">${p[COL_POLICY] || 'N/A'}</td>
                         <td class="p-3 text-[11px] font-medium text-slate-600 truncate max-w-[150px]" title="${toTitleCase(p[COL_INSURED])}">${toTitleCase(p[COL_INSURED]) || 'Unknown'}</td>
@@ -853,7 +865,6 @@
                                      (state.sub === 'agent' && toTitleCase(row[COL_AGENT]) === state.selectedName) || 
                                      (state.sub === 'manager' && toTitleCase(row[COL_MANAGER]) === state.selectedName));
 
-                // If Manager view, only populate LB with agents under this manager
                 const passesLBFilter = state.sub === 'cluster' || (state.sub === 'manager' && toTitleCase(row[COL_MANAGER]) === state.selectedName);
 
                 if (state.main === 'fresh') {
@@ -1006,7 +1017,7 @@
             const summaryDiv = document.getElementById('summary-section');
             if (state.main === 'fresh') {
                 summaryDiv.innerHTML = `
-                    <div class="bg-slate-900 rounded-2xl p-5 shadow-lg text-white col-span-1 md:col-span-2 relative overflow-hidden">
+                    <div class="bg-slate-900 rounded-2xl p-5 shadow-lg text-white col-span-1 md:col-span-2 relative overflow-hidden break-inside-avoid">
                         <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-500 rounded-full blur-2xl opacity-20"></div>
                         <div class="flex items-center mb-1 relative z-10">
                             <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Net Premium (GWP)</span>
@@ -1014,14 +1025,14 @@
                         </div>
                         <div class="text-3xl font-extrabold relative tracking-tight z-10">₹${tFreshAmt.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
                     </div>
-                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-center">
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-center break-inside-avoid">
                         <div class="flex items-center mb-1">
                             <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Policy Count</span>
                             ${getYoYBadge(tFreshNOP, pFreshNOP)}
                         </div>
                         <div class="text-2xl font-extrabold text-blue-600 tracking-tight">${tFreshNOP}</div>
                     </div>
-                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-center">
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-center break-inside-avoid">
                         <div class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Ticket Size</div>
                         <div class="text-2xl font-extrabold text-slate-800 tracking-tight">₹${tFreshNOP > 0 ? Math.round(tFreshAmt / tFreshNOP).toLocaleString('en-IN') : 0}</div>
                     </div>
@@ -1031,25 +1042,25 @@
                 const prevRenewPercent = pBase > 0 ? Math.round((pRenewed / pBase) * 100) : 0;
 
                 summaryDiv.innerHTML = `
-                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 break-inside-avoid">
                         <div class="flex items-center mb-1">
                             <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Base</span>
                             ${getYoYBadge(tBase, pBase)}
                         </div>
                         <div class="text-2xl font-extrabold text-slate-800 tracking-tight">${tBase}</div>
                     </div>
-                    <div class="bg-emerald-50 rounded-2xl p-5 shadow-sm border border-emerald-100">
+                    <div class="bg-emerald-50 rounded-2xl p-5 shadow-sm border border-emerald-100 break-inside-avoid">
                         <div class="flex items-center mb-1">
                             <span class="text-emerald-500 text-[10px] font-bold uppercase tracking-widest">Renewed</span>
                             ${getYoYBadge(tRenewed, pRenewed)}
                         </div>
                         <div class="text-2xl font-extrabold text-emerald-600 tracking-tight">${tRenewed}</div>
                     </div>
-                    <div class="bg-rose-50 rounded-2xl p-5 shadow-sm border border-rose-100">
+                    <div class="bg-rose-50 rounded-2xl p-5 shadow-sm border border-rose-100 break-inside-avoid">
                         <div class="text-rose-500 text-[10px] font-bold uppercase tracking-widest mb-1">Missed</div>
                         <div class="text-2xl font-extrabold text-rose-600 tracking-tight">${tMissed}</div>
                     </div>
-                    <div class="bg-slate-900 rounded-2xl p-5 shadow-lg text-white">
+                    <div class="bg-slate-900 rounded-2xl p-5 shadow-lg text-white break-inside-avoid">
                         <div class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1 flex items-center">
                             <span>Pending</span>
                             ${getYoYBadge(renewPercent, prevRenewPercent)}
@@ -1070,22 +1081,22 @@
                 const monthName = FY_MONTHS[index];
                 if (state.main === 'fresh') {
                     html += `
-                    <div class="bg-white rounded-xl border border-slate-100 p-4 stat-card group relative" onclick="openDrillDown(${index})">
-                        <div class="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl z-0"></div>
+                    <div class="bg-white rounded-xl border border-slate-100 p-4 stat-card group relative break-inside-avoid" onclick="openDrillDown(${index})">
+                        <div class="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl z-0 print:hidden"></div>
                         <div class="relative z-10">
                             <div class="flex justify-between items-center mb-2">
                                 <span class="text-xs font-bold text-slate-400 uppercase group-hover:text-blue-600 transition-colors">${monthName}</span>
                                 <span class="text-blue-600 text-[10px] font-bold bg-blue-50 px-1.5 py-0.5 rounded group-hover:bg-blue-100 transition-colors">${data.freshNOP} NOP</span>
                             </div>
                             <div class="text-sm font-extrabold text-slate-800 truncate tracking-tight">₹${data.freshAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
-                            <div class="mt-2 text-[9px] text-slate-400 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center font-semibold">View Details <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg></div>
+                            <div class="mt-2 text-[9px] text-slate-400 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center font-semibold print:hidden">View Details <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg></div>
                         </div>
                     </div>`;
                 } else {
                     const badge = data.isFuture ? `<span class="bg-amber-50 text-amber-600 text-[9px] font-bold px-1.5 py-0.5 rounded group-hover:bg-amber-100">Future</span>` : ``;
                     html += `
-                    <div class="bg-white rounded-xl border border-slate-100 p-4 stat-card group relative" onclick="openDrillDown(${index})">
-                        <div class="absolute inset-0 bg-slate-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl z-0"></div>
+                    <div class="bg-white rounded-xl border border-slate-100 p-4 stat-card group relative break-inside-avoid" onclick="openDrillDown(${index})">
+                        <div class="absolute inset-0 bg-slate-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl z-0 print:hidden"></div>
                         <div class="relative z-10">
                             <div class="flex justify-between items-center mb-2">
                                 <span class="text-xs font-bold text-slate-400 uppercase group-hover:text-slate-600 transition-colors">${monthName}</span>
