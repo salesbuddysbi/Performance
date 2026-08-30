@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Business Performance Dashboard</title>
-    <!-- Tailwind CSS for Styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SheetJS for parsing Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Chart.js for Graphs -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
@@ -18,12 +15,12 @@
 </head>
 <body class="text-gray-800 h-screen flex flex-col overflow-hidden">
 
-    <!-- Upload Overlay (Shows if data.xlsx is missing) -->
+    <!-- Upload Overlay -->
     <div id="upload-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
         <div class="bg-white p-8 rounded-lg shadow-xl text-center max-w-md w-full">
             <svg class="mx-auto h-12 w-12 text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
             <h2 class="text-2xl font-bold mb-2">Upload Master Data</h2>
-            <p class="text-gray-500 mb-6 text-sm">No default 'data.xlsx' found in repository. Please upload your master Excel file to continue.</p>
+            <p class="text-gray-500 mb-6 text-sm">No default data file found in repository. Please upload your master Excel file to continue.</p>
             <input type="file" id="file-upload" accept=".xlsx, .xls" class="hidden">
             <button onclick="document.getElementById('file-upload').click()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition">Browse File</button>
         </div>
@@ -69,13 +66,11 @@
         <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-gray-100">
             <div class="max-w-7xl mx-auto space-y-6">
                 
-                <!-- Financial Year Calendar Grid -->
                 <h2 class="text-lg font-semibold text-gray-700" id="grid-title">Financial Year Calendar</h2>
                 <div id="fy-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     <!-- Cards generated via JS -->
                 </div>
 
-                <!-- Graphical Representation -->
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
                     <h2 class="text-lg font-semibold text-gray-700 mb-4">Performance Trend (FY)</h2>
                     <div class="relative h-72 w-full">
@@ -87,29 +82,22 @@
     </div>
 
     <script>
-        // === CONFIGURATION ===
-        // Change these strings if your Excel column headers differ
-        const COL_AGENT = "Agent Name";
-        const COL_MANAGER = "Manager Name";
+        // === MAPPED TO "Kollam Cluster.xlsx" ===
+        const COL_AGENT = "Intermediary Name";
+        const COL_MANAGER = "SSM Name";
         const COL_DATE = "Policy Start Date";
-        const COL_TYPE = "Policy Type";
-        const COL_PREM = "Premium";
-        const COL_STATUS = "Renewal Status"; // "Renewed" or "Missed"
+        const COL_TYPE = "Policy Type"; 
+        const COL_PREM = "GWP";
+        const COL_TRANSACTION = "Transaction Type";
 
         const FY_MONTHS = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
 
-        // === STATE ===
         let rawData = [];
         let chartInstance = null;
-        let state = {
-            main: 'fresh', // 'fresh' | 'renewal'
-            sub: 'agent'   // 'agent' | 'manager' | 'cluster'
-        };
+        let state = { main: 'fresh', sub: 'agent' };
 
-        // === INITIALIZATION ===
         document.addEventListener("DOMContentLoaded", () => {
             attemptFetchDefaultFile();
-            
             document.getElementById('file-upload').addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file) loadExcel(file);
@@ -118,12 +106,16 @@
 
         async function attemptFetchDefaultFile() {
             try {
-                const response = await fetch('data.xlsx');
+                // Tries to fetch Kollam Cluster.xlsx first, then data.xlsx
+                let response = await fetch('Kollam Cluster.xlsx');
+                if (!response.ok) {
+                    response = await fetch('data.xlsx');
+                }
                 if (!response.ok) throw new Error('File not found');
+                
                 const arrayBuffer = await response.arrayBuffer();
                 parseExcelData(arrayBuffer);
             } catch (error) {
-                console.log("Default file not found, showing upload prompt.");
                 document.getElementById('upload-overlay').classList.remove('hidden');
             }
         }
@@ -138,16 +130,13 @@
             try {
                 const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
                 rawData = [];
-                // Process all tabs
                 workbook.SheetNames.forEach(sheetName => {
                     const sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-                    // Add year from tab if date is missing (optional fallback, currently relies on COL_DATE)
                     rawData = rawData.concat(sheet);
                 });
                 
                 document.getElementById('upload-overlay').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
-                
                 updateDropdowns();
             } catch (err) {
                 alert("Error parsing Excel file. Ensure it's a valid .xlsx format.");
@@ -155,7 +144,6 @@
             }
         }
 
-        // === UI INTERACTION ===
         function switchMainModule(module) {
             state.main = module;
             document.getElementById('tab-fresh').classList.toggle('tab-active', module === 'fresh');
@@ -169,11 +157,9 @@
             state.sub = module;
             ['agent', 'manager', 'cluster'].forEach(m => {
                 const btn = document.getElementById(`sub-${m}`);
-                if (m === module) {
-                    btn.className = "px-4 py-1 rounded shadow bg-white text-sm font-medium";
-                } else {
-                    btn.className = "px-4 py-1 rounded text-gray-600 text-sm font-medium hover:bg-gray-300 transition";
-                }
+                btn.className = m === module 
+                    ? "px-4 py-1 rounded shadow bg-white text-sm font-medium" 
+                    : "px-4 py-1 rounded text-gray-600 text-sm font-medium hover:bg-gray-300 transition";
             });
             updateDropdowns();
         }
@@ -182,18 +168,15 @@
             const yearSelect = document.getElementById('year-select');
             const nameSelect = document.getElementById('name-select');
             
-            // Extract unique Years
             const years = [...new Set(rawData.map(row => {
                 if(!row[COL_DATE]) return null;
                 const d = new Date(row[COL_DATE]);
                 if (isNaN(d)) return null;
-                // Calculate FY based on Month
                 return d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1;
             }).filter(y => y !== null))].sort((a, b) => b - a);
 
             yearSelect.innerHTML = '<option value="">Select Year...</option>' + years.map(y => `<option value="${y}">FY ${y}-${y+1}</option>`).join('');
 
-            // Handle Name dropdown visibility
             if (state.sub === 'cluster') {
                 nameSelect.classList.add('hidden');
             } else {
@@ -203,11 +186,10 @@
                 nameSelect.innerHTML = '<option value="">Select Name...</option>' + names.map(n => `<option value="${n}">${n}</option>`).join('');
             }
             
-            document.getElementById('fy-grid').innerHTML = ''; // Clear grid
+            document.getElementById('fy-grid').innerHTML = ''; 
             if(chartInstance) chartInstance.destroy();
         }
 
-        // === DATA PROCESSING & RENDERING ===
         function renderDashboard() {
             const selectedYear = parseInt(document.getElementById('year-select').value);
             const selectedName = document.getElementById('name-select').value;
@@ -215,44 +197,49 @@
             if (!selectedYear) return;
             if (state.sub !== 'cluster' && !selectedName) return;
 
-            // Initialize Grid Data array
             const fyData = Array.from({ length: 12 }, () => ({
                 freshNOP: 0, freshAmount: 0,
                 renNOP: 0, renRenewed: 0, renMissed: 0
             }));
 
-            // Filter and Aggregate Data
             rawData.forEach(row => {
                 if(!row[COL_DATE]) return;
                 const date = new Date(row[COL_DATE]);
                 if (isNaN(date)) return;
 
-                const month = date.getMonth(); // 0-11
+                const month = date.getMonth(); 
                 const year = date.getFullYear();
                 
-                // Determine FY of this row
                 const rowFY = month >= 3 ? year : year - 1;
                 if (rowFY !== selectedYear) return;
 
-                // Check Name filter
                 if (state.sub === 'agent' && row[COL_AGENT] !== selectedName) return;
                 if (state.sub === 'manager' && row[COL_MANAGER] !== selectedName) return;
 
-                // Map standard month to FY month (April = 0, March = 11)
                 const fyMonthIndex = month >= 3 ? month - 3 : month + 9;
                 
-                const pType = (row[COL_TYPE] || '').toLowerCase();
+                // Read from Excel
+                const pType = (row[COL_TYPE] || '').toString().toLowerCase();
+                const tType = (row[COL_TRANSACTION] || '').toString().toLowerCase();
                 const premium = parseFloat(row[COL_PREM]) || 0;
 
-                if (state.main === 'fresh' && pType.includes('fresh')) {
+                // Determine if Fresh or Renewal based on exact Excel phrasing
+                const isFresh = pType.includes('new business') || tType.includes('fresh');
+                const isRenewal = pType.includes('renewal') || tType.includes('renewal');
+
+                if (state.main === 'fresh' && isFresh) {
                     fyData[fyMonthIndex].freshNOP++;
                     fyData[fyMonthIndex].freshAmount += premium;
                 } 
-                else if (state.main === 'renewal' && pType.includes('renewal')) {
+                else if (state.main === 'renewal' && isRenewal) {
                     fyData[fyMonthIndex].renNOP++;
-                    const status = (row[COL_STATUS] || '').toLowerCase();
-                    if (status.includes('renewed')) fyData[fyMonthIndex].renRenewed++;
-                    else if (status.includes('missed')) fyData[fyMonthIndex].renMissed++;
+                    // Note: Since 'Kollam Cluster.xlsx' only contains successful policies, they all map to 'Renewed' by default.
+                    // If you add a "Missed" tag in the future under "Transaction Type", it will catch it here.
+                    if (tType.includes('missed')) {
+                        fyData[fyMonthIndex].renMissed++;
+                    } else {
+                        fyData[fyMonthIndex].renRenewed++;
+                    }
                 }
             });
 
@@ -271,7 +258,7 @@
                     html += `
                     <div class="bg-white rounded-lg shadow border border-gray-100 p-4">
                         <div class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">${monthName}</div>
-                        <div class="text-2xl font-bold text-blue-600">₹${data.freshAmount.toLocaleString('en-IN')}</div>
+                        <div class="text-2xl font-bold text-blue-600">₹${data.freshAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
                         <div class="text-sm text-gray-600 mt-1"><span class="font-semibold">${data.freshNOP}</span> NOP</div>
                     </div>`;
                 } else {
@@ -286,7 +273,6 @@
                     </div>`;
                 }
             });
-            
             grid.innerHTML = html;
         }
 
@@ -300,9 +286,9 @@
             if (state.main === 'fresh') {
                 datasets = [
                     {
-                        label: 'Fresh Business Amount',
+                        label: 'Fresh Business Amount (₹)',
                         data: fyData.map(d => d.freshAmount),
-                        backgroundColor: 'rgba(59, 130, 246, 0.5)', // Blue
+                        backgroundColor: 'rgba(59, 130, 246, 0.5)',
                         borderColor: 'rgb(59, 130, 246)',
                         borderWidth: 2,
                         type: 'bar',
@@ -311,7 +297,7 @@
                     {
                         label: 'Fresh NOP',
                         data: fyData.map(d => d.freshNOP),
-                        borderColor: 'rgb(249, 115, 22)', // Orange
+                        borderColor: 'rgb(249, 115, 22)',
                         borderWidth: 2,
                         type: 'line',
                         tension: 0.3,
@@ -323,13 +309,13 @@
                     {
                         label: 'Renewed',
                         data: fyData.map(d => d.renRenewed),
-                        backgroundColor: 'rgba(34, 197, 94, 0.7)', // Green
+                        backgroundColor: 'rgba(34, 197, 94, 0.7)',
                         type: 'bar'
                     },
                     {
                         label: 'Missed',
                         data: fyData.map(d => d.renMissed),
-                        backgroundColor: 'rgba(239, 68, 68, 0.7)', // Red
+                        backgroundColor: 'rgba(239, 68, 68, 0.7)',
                         type: 'bar'
                     }
                 ];
