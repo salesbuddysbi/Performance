@@ -8,129 +8,181 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #0f172a; }
         .hidden { display: none !important; }
-        .fade-in { animation: fadeIn 0.4s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Custom toggle styles */
-        .toggle-btn { transition: all 0.2s ease-in-out; }
-        .toggle-active { background-color: #2563eb; color: white; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); }
-        .toggle-inactive { background-color: #e2e8f0; color: #475569; hover:bg-gray-300; }
+        /* Smooth Animations */
+        .fade-in { animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .slide-up { animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Custom UI Elements */
+        .glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
+        .stat-card { transition: all 0.3s ease; }
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01); }
+        
+        /* Toggle Buttons */
+        .control-toggle { transition: all 0.2s ease; cursor: pointer; }
+        .toggle-active { background-color: #0f172a; color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .toggle-inactive { background-color: transparent; color: #64748b; }
+        .toggle-inactive:hover { background-color: #e2e8f0; color: #334155; }
     </style>
 </head>
-<body class="text-gray-800 h-screen flex flex-col overflow-hidden">
+<body class="h-screen flex flex-col overflow-hidden">
 
     <!-- 1. Upload Overlay -->
-    <div id="upload-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-md w-full">
-            <svg class="mx-auto h-12 w-12 text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-            <h2 class="text-2xl font-bold mb-2">Upload Master Data</h2>
-            <p class="text-gray-500 mb-6 text-sm">No default 'Kollam Cluster.xlsx' found. Please upload your file to continue.</p>
+    <div id="upload-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-md w-full slide-up border border-slate-100">
+            <div class="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+            </div>
+            <h2 class="text-3xl font-bold mb-3 text-slate-800">Master Data</h2>
+            <p class="text-slate-500 mb-8 text-sm leading-relaxed">No default repository file found. Please upload your master Excel file to initialize the dashboard.</p>
             <input type="file" id="file-upload" accept=".xlsx, .xls" class="hidden">
-            <button onclick="document.getElementById('file-upload').click()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition w-full">Browse File</button>
+            <button onclick="document.getElementById('file-upload').click()" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3.5 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all w-full text-lg">Browse File</button>
         </div>
     </div>
 
     <!-- 2. Landing Page -->
-    <div id="landing-page" class="hidden flex-1 flex flex-col items-center justify-center bg-gray-50 h-full w-full fade-in z-40">
-        <div class="mb-12 text-center">
-            <h1 class="text-5xl font-extrabold text-gray-900 mb-4 tracking-tight">Performance Portal</h1>
-            <p class="text-xl text-gray-500">Select a module to view business analytics</p>
+    <div id="landing-page" class="hidden flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 h-full w-full fade-in z-40 relative overflow-hidden">
+        
+        <!-- Decorative Background Shapes -->
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0 opacity-40 pointer-events-none">
+            <div class="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-blue-200 blur-3xl"></div>
+            <div class="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-indigo-200 blur-3xl"></div>
+        </div>
+
+        <div class="z-10 mb-14 text-center slide-up">
+            <h1 class="text-5xl md:text-6xl font-extrabold text-slate-900 mb-4 tracking-tight">Performance <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Portal</span></h1>
+            <p class="text-xl text-slate-500 font-medium">Select a module to view analytics</p>
         </div>
         
-        <div class="max-w-4xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+        <div class="z-10 max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 w-full slide-up" style="animation-delay: 0.1s;">
             <!-- Fresh Business Card -->
-            <button onclick="openDashboard('fresh')" class="bg-white p-10 rounded-3xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-2 flex flex-col items-center justify-center gap-6 border border-gray-100 group">
-                <div class="p-5 bg-blue-50 rounded-full group-hover:bg-blue-100 group-hover:scale-110 transition duration-300">
-                    <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                </div>
+            <button onclick="openDashboard('fresh')" class="bg-white/80 backdrop-blur-lg p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all transform hover:-translate-y-2 border border-white group text-left flex flex-col justify-between h-full relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-50 to-blue-100 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
                 <div>
-                    <h2 class="text-3xl font-bold text-gray-800 group-hover:text-blue-600 transition mb-2">Fresh Business</h2>
-                    <p class="text-gray-500 text-center">Track new policy acquisitions, NOP counts, and premium.</p>
+                    <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-blue-600/30 group-hover:rotate-3 transition-transform">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-slate-800 mb-3">Fresh Business</h2>
+                    <p class="text-slate-500 leading-relaxed">Analyze new policy acquisitions, roll-overs, precise NOP counts, and net premium with auto-deduction of cancellations.</p>
+                </div>
+                <div class="mt-8 flex items-center text-blue-600 font-semibold text-sm uppercase tracking-wider group-hover:translate-x-2 transition-transform">
+                    Enter Dashboard <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </div>
             </button>
 
             <!-- Renewal Performance Card -->
-            <button onclick="openDashboard('renewal')" class="bg-white p-10 rounded-3xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-2 flex flex-col items-center justify-center gap-6 border border-gray-100 group">
-                <div class="p-5 bg-green-50 rounded-full group-hover:bg-green-100 group-hover:scale-110 transition duration-300">
-                    <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                </div>
+            <button onclick="openDashboard('renewal')" class="bg-white/80 backdrop-blur-lg p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all transform hover:-translate-y-2 border border-white group text-left flex flex-col justify-between h-full relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
                 <div>
-                    <h2 class="text-3xl font-bold text-gray-800 group-hover:text-green-600 transition mb-2">Renewal Performance</h2>
-                    <p class="text-gray-500 text-center">Track retention against previous year's overall base (Fresh & Renewal).</p>
+                    <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-indigo-600/30 group-hover:-rotate-3 transition-transform">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-slate-800 mb-3">Renewal Performance</h2>
+                    <p class="text-slate-500 leading-relaxed">Track precise retention metrics. Base strictly calculated from previous year's fresh & renewal policies, excluding all endorsements.</p>
+                </div>
+                <div class="mt-8 flex items-center text-indigo-600 font-semibold text-sm uppercase tracking-wider group-hover:translate-x-2 transition-transform">
+                    Enter Dashboard <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </div>
             </button>
         </div>
     </div>
 
     <!-- 3. Dashboard View -->
-    <div id="app-container" class="hidden flex-1 flex flex-col h-full bg-gray-50">
-        <!-- Header -->
-        <header class="bg-white shadow-sm z-20 sticky top-0">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center py-4">
-                    <div class="flex items-center gap-4">
-                        <button onclick="goHome()" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition">
+    <div id="app-container" class="hidden flex-1 flex flex-col h-full bg-slate-50 fade-in">
+        
+        <!-- Top App Bar -->
+        <header class="glass-panel sticky top-0 z-30 border-b border-slate-200">
+            <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-20">
+                    <div class="flex items-center gap-6">
+                        <button onclick="goHome()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                         </button>
-                        <h1 class="text-2xl font-bold text-gray-900" id="dashboard-title">Dashboard</h1>
+                        <div>
+                            <h1 class="text-2xl font-bold text-slate-900 tracking-tight" id="dashboard-title">Dashboard</h1>
+                            <p class="text-xs font-medium text-slate-500 uppercase tracking-widest mt-0.5" id="dashboard-subtitle">Analytics Mode</p>
+                        </div>
+                    </div>
+
+                    <!-- Module Switcher inside Topbar -->
+                    <div class="hidden md:flex bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
+                        <button onclick="openDashboard('fresh')" id="nav-fresh" class="px-5 py-2 rounded-lg text-sm font-semibold transition-all">Fresh Business</button>
+                        <button onclick="openDashboard('renewal')" id="nav-renewal" class="px-5 py-2 rounded-lg text-sm font-semibold transition-all">Renewal Performance</button>
                     </div>
                 </div>
             </div>
         </header>
 
-        <!-- Filter Controls (Choose Easily) -->
-        <div class="bg-white border-b border-gray-200 shadow-sm z-10">
-            <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        <!-- Control Center (Filters) -->
+        <div class="bg-white border-b border-slate-200 shadow-sm z-20">
+            <div class="max-w-[1400px] mx-auto px-4 py-5 sm:px-6 lg:px-8">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     
-                    <!-- Easy Toggle Sub-modules -->
-                    <div class="flex bg-gray-100 p-1.5 rounded-xl w-fit">
-                        <button id="sub-agent" class="toggle-btn px-6 py-2.5 rounded-lg text-sm font-semibold toggle-active" onclick="switchSubModule('agent')">Agent</button>
-                        <button id="sub-manager" class="toggle-btn px-6 py-2.5 rounded-lg text-sm font-semibold toggle-inactive" onclick="switchSubModule('manager')">Manager</button>
-                        <button id="sub-cluster" class="toggle-btn px-6 py-2.5 rounded-lg text-sm font-semibold toggle-inactive" onclick="switchSubModule('cluster')">Cluster</button>
+                    <!-- Hierarchy Toggles -->
+                    <div class="flex bg-slate-100/80 p-1.5 rounded-xl border border-slate-200/60 w-fit">
+                        <button id="sub-agent" class="control-toggle px-6 py-2 rounded-lg text-sm font-medium toggle-active" onclick="switchSubModule('agent')">Agent</button>
+                        <button id="sub-manager" class="control-toggle px-6 py-2 rounded-lg text-sm font-medium toggle-inactive" onclick="switchSubModule('manager')">Manager</button>
+                        <button id="sub-cluster" class="control-toggle px-6 py-2 rounded-lg text-sm font-medium toggle-inactive" onclick="switchSubModule('cluster')">Cluster</button>
                     </div>
                     
-                    <!-- Dropdown Filters -->
+                    <!-- Selectors -->
                     <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 w-full md:w-auto">
-                        <select id="year-select" class="block w-full sm:w-48 pl-4 pr-10 py-3 text-sm border-gray-300 bg-gray-50 border focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-xl shadow-sm transition" onchange="renderDashboard()">
-                            <option value="">Select Financial Year...</option>
-                        </select>
+                        <div class="relative">
+                            <select id="year-select" class="appearance-none block w-full sm:w-56 pl-4 pr-10 py-2.5 text-sm font-medium border-slate-200 bg-white border focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-xl shadow-sm transition-all" onchange="renderDashboard()">
+                                <option value="">Select Financial Year</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </div>
                         
-                        <select id="name-select" class="block w-full sm:w-72 pl-4 pr-10 py-3 text-sm border-gray-300 bg-gray-50 border focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-xl shadow-sm transition" onchange="renderDashboard()">
-                            <option value="">Select Name...</option>
-                        </select>
+                        <div class="relative">
+                            <select id="name-select" class="appearance-none block w-full sm:w-72 pl-4 pr-10 py-2.5 text-sm font-medium border-slate-200 bg-white border focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-xl shadow-sm transition-all" onchange="renderDashboard()">
+                                <option value="">Select Target Name</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Main Dashboard Content -->
-        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-            <div class="max-w-7xl mx-auto space-y-8 fade-in" id="dashboard-content">
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
+            <div class="max-w-[1400px] mx-auto space-y-8 slide-up" id="dashboard-content">
                 
-                <!-- SUMMARY CARDS (Dynamically populated) -->
-                <div id="summary-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <!-- Injected via JS based on module -->
+                <!-- SUMMARY CARDS -->
+                <div id="summary-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <!-- Injected via JS -->
                 </div>
 
-                <!-- CALENDAR GRID -->
-                <div>
-                    <div class="flex justify-between items-end mb-4">
-                        <h2 class="text-xl font-bold text-gray-800">Month-wise Breakdown</h2>
-                        <span class="text-xs font-medium text-gray-500 bg-gray-200 px-3 py-1 rounded-full" id="data-context-label">Excluding Endorsements</span>
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                    <!-- CALENDAR GRID (Takes up 2/3 space on large screens) -->
+                    <div class="xl:col-span-2 space-y-4">
+                        <div class="flex justify-between items-end bg-white p-4 rounded-t-2xl border-b border-slate-100 shadow-sm">
+                            <div>
+                                <h2 class="text-lg font-bold text-slate-800">Monthly Progression</h2>
+                                <p class="text-xs text-slate-500 mt-1" id="data-context-label"></p>
+                            </div>
+                        </div>
+                        <div id="fy-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-2">
+                            <!-- Cards generated via JS -->
+                        </div>
                     </div>
-                    <div id="fy-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        <!-- Cards generated via JS -->
-                    </div>
-                </div>
 
-                <!-- CHART -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h2 class="text-xl font-bold text-gray-800 mb-6">Performance Trend</h2>
-                    <div class="relative h-80 w-full">
-                        <canvas id="performanceChart"></canvas>
+                    <!-- CHART AREA (Takes up 1/3 space) -->
+                    <div class="xl:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[500px]">
+                        <h2 class="text-lg font-bold text-slate-800 mb-6">Annual Trend Analysis</h2>
+                        <div class="relative flex-1 w-full">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -142,7 +194,6 @@
         const COL_AGENT = "Intermediary Name";
         const COL_MANAGER = "SSM Name";
         const COL_DATE = "Policy Start Date";
-        const COL_TYPE = "Policy Type"; 
         const COL_PREM = "GWP";
         const COL_TRANSACTION = "Transaction Type";
 
@@ -203,17 +254,32 @@
             document.getElementById('landing-page').classList.add('hidden');
             document.getElementById('app-container').classList.remove('hidden');
             
-            document.getElementById('dashboard-title').innerText = mainModule === 'fresh' 
-                ? 'Fresh Business Overview' 
-                : 'Renewal Performance Overview';
+            // Setup Text
+            document.getElementById('dashboard-title').innerText = mainModule === 'fresh' ? 'Fresh Business' : 'Renewal Performance';
+            document.getElementById('dashboard-subtitle').innerText = mainModule === 'fresh' ? 'Acquisition & Premium Analytics' : 'Retention & Base Analytics';
             
+            document.getElementById('data-context-label').innerText = mainModule === 'fresh' 
+                ? 'Includes Fresh & Roll-overs. Cancellations strictly deducted.' 
+                : 'Base excludes all endorsements. Only tracks Fresh, Renewal & Roll-overs.';
+
+            // Setup Top Nav Active State
+            const freshNav = document.getElementById('nav-fresh');
+            const renNav = document.getElementById('nav-renewal');
+            if (mainModule === 'fresh') {
+                freshNav.className = 'px-5 py-2 rounded-lg text-sm font-semibold bg-white text-slate-900 shadow-sm transition-all';
+                renNav.className = 'px-5 py-2 rounded-lg text-sm font-semibold text-slate-500 hover:text-slate-700 transition-all';
+            } else {
+                renNav.className = 'px-5 py-2 rounded-lg text-sm font-semibold bg-white text-slate-900 shadow-sm transition-all';
+                freshNav.className = 'px-5 py-2 rounded-lg text-sm font-semibold text-slate-500 hover:text-slate-700 transition-all';
+            }
+
             switchSubModule('agent'); 
         }
 
         function goHome() {
             document.getElementById('app-container').classList.add('hidden');
             document.getElementById('landing-page').classList.remove('hidden');
-            // Clear Dashboard data visually so it's fresh on next entry
+            
             document.getElementById('summary-section').innerHTML = '';
             document.getElementById('fy-grid').innerHTML = '';
             if(chartInstance) chartInstance.destroy();
@@ -246,7 +312,7 @@
                 return d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1;
             }).filter(y => y !== null))].sort((a, b) => b - a);
 
-            yearSelect.innerHTML = '<option value="">Select Financial Year...</option>' + years.map(y => `<option value="${y}">FY ${y}-${y+1}</option>`).join('');
+            yearSelect.innerHTML = '<option value="">Select Financial Year</option>' + years.map(y => `<option value="${y}">FY ${y}-${y+1}</option>`).join('');
 
             if (state.sub === 'cluster') {
                 nameSelect.classList.add('hidden');
@@ -254,16 +320,15 @@
                 nameSelect.classList.remove('hidden');
                 const colKey = state.sub === 'agent' ? COL_AGENT : COL_MANAGER;
                 const names = [...new Set(rawData.map(row => row[colKey]).filter(n => n))].sort();
-                nameSelect.innerHTML = '<option value="">Select Name...</option>' + names.map(n => `<option value="${n}">${n}</option>`).join('');
+                nameSelect.innerHTML = '<option value="">Select Target Name</option>' + names.map(n => `<option value="${n}">${n}</option>`).join('');
             }
             
-            // Clear current view until selections are made
             document.getElementById('summary-section').innerHTML = '';
             document.getElementById('fy-grid').innerHTML = ''; 
             if(chartInstance) chartInstance.destroy();
         }
 
-        // === CORE LOGIC ===
+        // === MATHEMATICAL CORE ENGINE ===
         function renderDashboard() {
             const selectedYear = parseInt(document.getElementById('year-select').value);
             const selectedName = document.getElementById('name-select').value;
@@ -276,7 +341,6 @@
                 baseNOP: 0, renRenewed: 0, renMissed: 0
             }));
 
-            // Totals for Summary Cards
             let totalFreshAmt = 0, totalFreshNOP = 0;
             let totalBaseNOP = 0, totalRenewed = 0, totalMissed = 0;
 
@@ -285,50 +349,59 @@
                 const date = new Date(row[COL_DATE]);
                 if (isNaN(date)) return;
 
-                const tType = (row[COL_TRANSACTION] || '').toString().toLowerCase();
-                
-                // EXCLUSION RULE: Exclude endorsements entirely from all calculations
-                if (tType.includes('endorsement')) return;
+                if (state.sub === 'agent' && row[COL_AGENT] !== selectedName) return;
+                if (state.sub === 'manager' && row[COL_MANAGER] !== selectedName) return;
 
                 const month = date.getMonth(); 
                 const year = date.getFullYear();
                 const rowFY = month >= 3 ? year : year - 1;
-
-                if (state.sub === 'agent' && row[COL_AGENT] !== selectedName) return;
-                if (state.sub === 'manager' && row[COL_MANAGER] !== selectedName) return;
-
                 const fyMonthIndex = month >= 3 ? month - 3 : month + 9;
                 
-                const pType = (row[COL_TYPE] || '').toString().toLowerCase();
+                const tType = (row[COL_TRANSACTION] || '').toString().toLowerCase();
                 const premium = parseFloat(row[COL_PREM]) || 0;
 
-                const isFresh = pType.includes('new business') || tType.includes('fresh') || tType.includes('roll over');
-                const isRenewal = pType.includes('renewal') || tType.includes('renewal');
+                // STRICT BOOLEAN RULES
+                const isFreshBaseTx = tType.includes('fresh') || tType.includes('roll over');
+                const isRenewalTx = tType.includes('our renewal');
+                const isCancelTx = tType.includes('cancel'); 
 
                 if (state.main === 'fresh') {
-                    if (rowFY === selectedYear && isFresh) {
-                        fyData[fyMonthIndex].freshNOP++;
-                        fyData[fyMonthIndex].freshAmount += premium;
-                        
-                        totalFreshNOP++;
-                        totalFreshAmt += premium;
+                    if (rowFY === selectedYear) {
+                        // 1. Add Fresh & Roll Overs
+                        if (isFreshBaseTx) {
+                            fyData[fyMonthIndex].freshNOP += 1;
+                            fyData[fyMonthIndex].freshAmount += premium;
+                            totalFreshNOP += 1;
+                            totalFreshAmt += premium;
+                        } 
+                        // 2. Reduce Cancellations precisely
+                        else if (isCancelTx) {
+                            fyData[fyMonthIndex].freshNOP -= 1;
+                            // Ensure premium reduction regardless of how it's stored in Excel
+                            const cancelAmt = premium > 0 ? -Math.abs(premium) : premium; 
+                            fyData[fyMonthIndex].freshAmount += cancelAmt;
+                            
+                            totalFreshNOP -= 1;
+                            totalFreshAmt += cancelAmt;
+                        }
                     }
                 } 
                 else if (state.main === 'renewal') {
-                    // BASE NOP: ALL valid policies (Fresh + Renewal) from Previous Year
+                    // 1. RENEWAL BASE: Strictly Previous Year (Fresh + Roll Over + Our Renewal)
                     if (rowFY === (selectedYear - 1)) {
-                        fyData[fyMonthIndex].baseNOP++;
-                        totalBaseNOP++;
+                        if (isFreshBaseTx || isRenewalTx) {
+                            fyData[fyMonthIndex].baseNOP += 1;
+                            totalBaseNOP += 1;
+                        }
                     }
-                    // RENEWED: Only Renewals from Current Year
-                    if (rowFY === selectedYear && isRenewal) {
-                        fyData[fyMonthIndex].renRenewed++;
-                        totalRenewed++;
+                    // 2. RENEWED: Strictly Current Year (Our Renewal only)
+                    if (rowFY === selectedYear && isRenewalTx) {
+                        fyData[fyMonthIndex].renRenewed += 1;
+                        totalRenewed += 1;
                     }
                 }
             });
 
-            // Calculate Missed for Renewal View
             if (state.main === 'renewal') {
                 fyData.forEach(d => {
                     d.renMissed = Math.max(0, d.baseNOP - d.renRenewed);
@@ -347,37 +420,41 @@
             
             if (state.main === 'fresh') {
                 summaryDiv.innerHTML = `
-                    <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 shadow-lg text-white col-span-1 md:col-span-2">
-                        <div class="text-blue-100 text-sm font-semibold uppercase tracking-wider mb-1">Total Fresh Premium</div>
-                        <div class="text-4xl font-extrabold">₹${tFreshAmt.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                    <div class="stat-card bg-slate-900 rounded-2xl p-6 shadow-lg text-white col-span-1 md:col-span-2 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-bl-full"></div>
+                        <div class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Net Fresh Premium</div>
+                        <div class="text-4xl md:text-5xl font-extrabold tracking-tight">₹${tFreshAmt.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
                     </div>
-                    <div class="bg-white rounded-2xl p-6 shadow border border-gray-100 flex flex-col justify-center">
-                        <div class="text-gray-500 text-sm font-semibold uppercase tracking-wider mb-1">Total Fresh NOP</div>
-                        <div class="text-3xl font-extrabold text-gray-800">${tFreshNOP}</div>
+                    <div class="stat-card bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-center">
+                        <div class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">Net Fresh NOP</div>
+                        <div class="text-4xl font-extrabold text-blue-600">${tFreshNOP}</div>
                     </div>
-                    <div class="bg-white rounded-2xl p-6 shadow border border-gray-100 flex flex-col justify-center">
-                        <div class="text-gray-500 text-sm font-semibold uppercase tracking-wider mb-1">Avg Ticket Size</div>
-                        <div class="text-3xl font-extrabold text-gray-800">₹${tFreshNOP > 0 ? Math.round(tFreshAmt / tFreshNOP).toLocaleString('en-IN') : 0}</div>
+                    <div class="stat-card bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-center">
+                        <div class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">Avg Ticket Size</div>
+                        <div class="text-3xl font-extrabold text-slate-800">₹${tFreshNOP > 0 ? Math.round(tFreshAmt / tFreshNOP).toLocaleString('en-IN') : 0}</div>
                     </div>
                 `;
             } else {
                 const renewPercent = tBase > 0 ? Math.round((tRenewed / tBase) * 100) : 0;
                 summaryDiv.innerHTML = `
-                    <div class="bg-white rounded-2xl p-6 shadow border border-gray-100">
-                        <div class="text-gray-500 text-sm font-semibold uppercase tracking-wider mb-1">Total Base (Prev. Yr)</div>
-                        <div class="text-3xl font-extrabold text-gray-800">${tBase}</div>
+                    <div class="stat-card bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                        <div class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">Valid Target Base</div>
+                        <div class="text-4xl font-extrabold text-slate-800">${tBase}</div>
                     </div>
-                    <div class="bg-gradient-to-br from-green-500 to-green-700 rounded-2xl p-6 shadow-lg text-white">
-                        <div class="text-green-100 text-sm font-semibold uppercase tracking-wider mb-1">Total Renewed</div>
+                    <div class="stat-card bg-emerald-500 rounded-2xl p-6 shadow-lg shadow-emerald-500/20 text-white relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-20 h-20 bg-white opacity-10 rounded-bl-full"></div>
+                        <div class="text-emerald-100 text-xs font-bold uppercase tracking-widest mb-2">Total Renewed</div>
                         <div class="text-4xl font-extrabold">${tRenewed}</div>
                     </div>
-                    <div class="bg-gradient-to-br from-red-500 to-red-700 rounded-2xl p-6 shadow-lg text-white">
-                        <div class="text-red-100 text-sm font-semibold uppercase tracking-wider mb-1">Total Missed</div>
+                    <div class="stat-card bg-rose-500 rounded-2xl p-6 shadow-lg shadow-rose-500/20 text-white relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-20 h-20 bg-white opacity-10 rounded-bl-full"></div>
+                        <div class="text-rose-100 text-xs font-bold uppercase tracking-widest mb-2">Total Missed</div>
                         <div class="text-4xl font-extrabold">${tMissed}</div>
                     </div>
-                    <div class="bg-white rounded-2xl p-6 shadow border border-gray-100">
-                        <div class="text-gray-500 text-sm font-semibold uppercase tracking-wider mb-1">Retention Rate</div>
-                        <div class="text-3xl font-extrabold text-gray-800">${renewPercent}%</div>
+                    <div class="stat-card bg-slate-900 rounded-2xl p-6 shadow-lg text-white relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500 opacity-20 rounded-bl-full"></div>
+                        <div class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Retention Rate</div>
+                        <div class="text-4xl font-extrabold">${renewPercent}%</div>
                     </div>
                 `;
             }
@@ -392,19 +469,29 @@
                 
                 if (state.main === 'fresh') {
                     html += `
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 transform hover:-translate-y-1 hover:shadow-md transition duration-200">
-                        <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">${monthName}</div>
-                        <div class="text-xl font-bold text-blue-600 mb-1">₹${data.freshAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
-                        <div class="text-sm font-medium text-gray-600"><span class="font-bold text-gray-800">${data.freshNOP}</span> NOP</div>
+                    <div class="bg-white rounded-2xl border border-slate-100 p-5 stat-card">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-sm font-bold text-slate-400 uppercase tracking-wider">${monthName}</span>
+                            <span class="bg-blue-50 text-blue-600 text-xs font-bold px-2 py-1 rounded-md">${data.freshNOP} NOP</span>
+                        </div>
+                        <div class="text-xl font-extrabold text-slate-800">₹${data.freshAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
                     </div>`;
                 } else {
                     html += `
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 transform hover:-translate-y-1 hover:shadow-md transition duration-200">
-                        <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">${monthName}</div>
-                        <div class="text-lg font-bold text-gray-800 mb-2">Base: ${data.baseNOP}</div>
-                        <div class="space-y-1 border-t border-gray-50 pt-2">
-                            <div class="flex justify-between text-sm"><span class="text-gray-500">Renewed</span><span class="text-green-600 font-bold">${data.renRenewed}</span></div>
-                            <div class="flex justify-between text-sm"><span class="text-gray-500">Missed</span><span class="text-red-500 font-bold">${data.renMissed}</span></div>
+                    <div class="bg-white rounded-2xl border border-slate-100 p-5 stat-card">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-sm font-bold text-slate-400 uppercase tracking-wider">${monthName}</span>
+                            <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-md">Base: ${data.baseNOP}</span>
+                        </div>
+                        <div class="space-y-2 mt-4">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-slate-500 font-medium">Renewed</span>
+                                <span class="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded">${data.renRenewed}</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-slate-500 font-medium">Missed</span>
+                                <span class="text-rose-500 font-bold bg-rose-50 px-2 py-0.5 rounded">${data.renMissed}</span>
+                            </div>
                         </div>
                     </div>`;
                 }
@@ -421,57 +508,65 @@
             let chartOptions = { 
                 responsive: true, 
                 maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
                 plugins: {
-                    legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } }
+                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: { family: 'Inter', weight: '600' } } },
+                    tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)', titleFont: { size: 13, family: 'Inter' }, bodyFont: { size: 13, family: 'Inter' }, padding: 12, cornerRadius: 8 }
                 }
             };
 
             if (state.main === 'fresh') {
                 datasets = [
                     {
-                        label: 'Fresh Premium (₹)',
+                        label: 'Net Premium (₹)',
                         data: fyData.map(d => d.freshAmount),
-                        backgroundColor: 'rgba(37, 99, 235, 0.7)',
-                        borderRadius: 4,
+                        backgroundColor: 'rgba(37, 99, 235, 0.85)',
+                        hoverBackgroundColor: 'rgba(29, 78, 216, 1)',
+                        borderRadius: 6,
                         type: 'bar',
                         yAxisID: 'y'
                     },
                     {
-                        label: 'Fresh NOP',
+                        label: 'Net NOP',
                         data: fyData.map(d => d.freshNOP),
-                        borderColor: 'rgb(249, 115, 22)',
+                        borderColor: '#f59e0b',
+                        backgroundColor: '#f59e0b',
                         borderWidth: 3,
-                        pointBackgroundColor: 'rgb(249, 115, 22)',
+                        pointRadius: 4,
+                        pointBackgroundColor: '#fff',
+                        pointBorderWidth: 2,
                         type: 'line',
                         tension: 0.4,
                         yAxisID: 'y1'
                     }
                 ];
                 chartOptions.scales = {
-                    x: { grid: { display: false } },
-                    y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Amount (₹)', color: '#6b7280' } },
-                    y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'NOP Count', color: '#6b7280' } }
+                    x: { grid: { display: false }, ticks: { font: { family: 'Inter' } } },
+                    y: { type: 'linear', display: true, position: 'left', grid: { color: '#f1f5f9' }, title: { display: false } },
+                    y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: false } }
                 };
             } else {
                 datasets = [
                     {
                         label: 'Renewed',
                         data: fyData.map(d => d.renRenewed),
-                        backgroundColor: 'rgba(34, 197, 94, 0.8)',
-                        borderRadius: 4,
+                        backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                        hoverBackgroundColor: 'rgba(5, 150, 105, 1)',
+                        borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
                         type: 'bar'
                     },
                     {
                         label: 'Missed',
                         data: fyData.map(d => d.renMissed),
-                        backgroundColor: 'rgba(239, 68, 68, 0.8)',
-                        borderRadius: 4,
+                        backgroundColor: 'rgba(244, 63, 94, 0.85)',
+                        hoverBackgroundColor: 'rgba(225, 29, 72, 1)',
+                        borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
                         type: 'bar'
                     }
                 ];
                 chartOptions.scales = {
-                    x: { stacked: true, grid: { display: false } },
-                    y: { stacked: true, title: { display: true, text: 'Policies', color: '#6b7280' } }
+                    x: { stacked: true, grid: { display: false }, ticks: { font: { family: 'Inter' } } },
+                    y: { stacked: true, grid: { color: '#f1f5f9' }, title: { display: false } }
                 };
             }
 
