@@ -8,9 +8,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- HTML to PDF/Image Libraries -->
+    <!-- HTML to PDF Library (Bundles html2canvas internally) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
@@ -131,6 +130,7 @@
             <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight" id="role-title">Select Module</h1>
         </div>
         
+        <!-- Standard Roles -->
         <div id="role-standard" class="z-10 max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 w-full slide-up">
             <button onclick="navToDashboard('agent')" class="bg-white p-5 rounded-2xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1 border border-slate-100 group flex flex-col items-center">
                 <div class="w-12 h-12 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center mb-3 group-hover:bg-blue-600 group-hover:text-white transition-colors">
@@ -152,6 +152,7 @@
             </button>
         </div>
 
+        <!-- Ranking Roles -->
         <div id="role-ranking" class="z-10 max-w-2xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 w-full hidden slide-up">
             <button onclick="navToDashboard('gwp_rank')" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1 border border-amber-100 group flex flex-col items-center">
                 <div class="w-14 h-14 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center mb-3 group-hover:bg-amber-500 group-hover:text-white transition-colors">
@@ -185,11 +186,12 @@
                         </div>
                     </div>
                     
+                    <!-- Universal Export Actions -->
                     <div class="flex space-x-2 no-print">
-                        <button id="btn-export-pdf" onclick="exportPDF()" class="flex items-center bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
-                            <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> PDF
+                        <button id="btn-export-pdf" onclick="exportPDF()" class="flex items-center bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm">
+                            <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Export PDF
                         </button>
-                        <button id="btn-export-wa" onclick="shareToWhatsapp(this)" class="flex items-center bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                        <button id="btn-export-wa" onclick="shareToWhatsapp(this)" class="flex items-center bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm">
                             <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg> Share WA
                         </button>
                     </div>
@@ -232,12 +234,13 @@
             </div>
         </div>
 
-        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative" id="main-scroll-area">
             
             <div id="empty-state" class="flex flex-col items-center justify-center h-full min-h-[250px] text-center slide-up no-print">
                 <p class="text-slate-400 font-medium text-xs">Select mandatory filters above to load data.</p>
             </div>
 
+            <!-- EXPORT CONTAINER FOR PDF -->
             <div id="export-container" class="w-full">
                 
                 <!-- 1. STANDARD DASHBOARD UI -->
@@ -296,6 +299,7 @@
                         </div>
                     </div>
                     
+                    <!-- PERSISTENCY TRACKER (Renewal) -->
                     <div id="persistency-tracker" class="hidden bg-white rounded-xl shadow-sm border border-slate-100 p-5 mt-2">
                         <h2 class="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center justify-between">
                             Historical Retention Tracker
@@ -307,21 +311,24 @@
 
                 <!-- 2. RANKING BOARD UI -->
                 <div class="max-w-3xl mx-auto hidden slide-up pb-10" id="ranking-board-content">
-                    <div class="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden relative">
-                        <div class="h-32 bg-gradient-to-br from-slate-900 to-slate-800 absolute top-0 left-0 w-full z-0"></div>
-                        <div class="absolute top-0 right-0 w-48 h-48 bg-amber-500 rounded-full blur-3xl opacity-20 z-0"></div>
+                    <div class="bg-white rounded-[2rem] shadow-xl border-[0.4rem] border-slate-100 overflow-hidden relative print:border-none print:shadow-none">
+                        <!-- Decorative Header -->
+                        <div class="h-36 bg-gradient-to-br from-slate-900 to-slate-800 absolute top-0 left-0 w-full z-0"></div>
+                        <div class="absolute top-0 right-0 w-56 h-56 bg-amber-500 rounded-full blur-3xl opacity-20 z-0"></div>
                         
                         <div class="relative z-10 p-8 text-center border-b border-slate-100/10">
                             <h1 class="text-3xl font-black text-white tracking-tight mb-2 uppercase" id="rb-title">Monthly Ranking</h1>
                             <p class="text-slate-300 font-semibold text-sm" id="rb-subtitle">Month Year</p>
                         </div>
                         
-                        <div class="p-6 bg-slate-50">
-                            <div class="flex justify-between items-center px-4 pb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200 mb-4">
-                                <span>Agent</span>
+                        <div class="p-6 bg-slate-50/50">
+                            <div class="flex justify-between items-center px-4 pb-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200 mb-4">
+                                <span>Agent & Manager</span>
                                 <span id="rb-metric-label">Score</span>
                             </div>
-                            <div id="rb-list" class="space-y-3"></div>
+                            <div id="rb-list" class="space-y-3">
+                                <!-- Ranking List Injected Here -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -347,6 +354,12 @@
         let rawData = [];
         let chartInstance = null;
         let state = { main: null, sub: null, selectedYear: null, selectedName: null, selectedMonth: null };
+
+        // Helper to proper title case strings
+        function toTitleCase(str) {
+            if (!str) return '';
+            return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        }
 
         document.addEventListener("DOMContentLoaded", () => {
             attemptFetchDefaultFile();
@@ -396,7 +409,6 @@
 
         function navToRole(mainModule) {
             state.main = mainModule;
-            
             if (mainModule === 'ranking') {
                 document.getElementById('role-title').innerText = 'Monthly Agent Ranking';
                 document.getElementById('role-standard').classList.add('hidden');
@@ -487,7 +499,7 @@
                     }
                     const names = [...new Set(filteredData.map(row => row[colKey]).filter(n => n))].sort();
                     const currentVal = nameSelect.value;
-                    nameSelect.innerHTML = '<option value="">Select Target Name</option>' + names.map(n => `<option value="${n}">${n}</option>`).join('');
+                    nameSelect.innerHTML = '<option value="">Select Target Name</option>' + names.map(n => `<option value="${n}">${toTitleCase(n)}</option>`).join('');
                     if(names.includes(currentVal)) nameSelect.value = currentVal;
                 }
                 renderDashboard();
@@ -512,19 +524,25 @@
             return `<span class="bg-slate-100 text-slate-500 text-[9px] px-1.5 py-0.5 rounded ml-2 font-bold shadow-sm">-</span>`;
         }
 
-        // === PDF EXPORT ===
-        function exportPDF() {
-            const isRanking = state.main === 'ranking';
-            const element = document.getElementById('export-container');
+        // === UNIVERSAL PDF EXPORT ===
+        async function exportPDF() {
+            const btnObj = document.getElementById('btn-export-pdf');
+            const originalHTML = btnObj.innerHTML;
+            btnObj.innerHTML = `<svg class="w-3.5 h-3.5 mr-1.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Exporting...`;
             
-            // Un-constrain scrolling areas for full PDF capture
+            const element = document.getElementById('export-container');
             const scrolls = element.querySelectorAll('.overflow-y-auto');
             scrolls.forEach(el => { el.classList.remove('max-h-56', 'overflow-y-auto'); });
             
+            const isRanking = state.main === 'ranking';
             let filename = `${state.main.toUpperCase()}_${state.sub.toUpperCase()}_FY${state.selectedYear}`;
             const dateStr = new Date().toISOString().split('T')[0];
-            if (state.sub === 'agent' && state.selectedName) filename = `${state.selectedName.replace(/\s+/g, '_')}_Report_${dateStr}`;
-            else if (isRanking) filename = `Ranking_${dateStr}`;
+            
+            if (state.sub === 'agent' && state.selectedName) {
+                filename = `${toTitleCase(state.selectedName).replace(/\s+/g, '_')}_Report_${dateStr}`;
+            } else if (isRanking) {
+                filename = `Agent_Ranking_${FY_MONTHS[state.selectedMonth]}_${state.selectedYear}`;
+            }
             
             const opt = {
                 margin: 0.3, filename: `${filename}.pdf`,
@@ -535,50 +553,68 @@
             
             document.querySelectorAll('.stat-card').forEach(el => { el.style.transform = 'none'; el.style.boxShadow = 'none'; });
             
-            html2pdf().set(opt).from(element).save().then(() => {
-                document.querySelectorAll('.stat-card').forEach(el => el.style = '');
-                scrolls.forEach(el => { el.classList.add('max-h-56', 'overflow-y-auto'); });
-            });
+            await html2pdf().set(opt).from(element).save();
+            
+            document.querySelectorAll('.stat-card').forEach(el => el.style = '');
+            scrolls.forEach(el => { el.classList.add('max-h-56', 'overflow-y-auto'); });
+            btnObj.innerHTML = originalHTML;
         }
 
-        // === WHATSAPP SHARE IMAGE ===
+        // === PDF WHATSAPP SHARE ===
         async function shareToWhatsapp(btnObj) {
-            btnObj.innerHTML = `<svg class="w-4 h-4 mr-1.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating...`;
+            const originalHTML = btnObj.innerHTML;
+            btnObj.innerHTML = `<svg class="w-4 h-4 mr-1.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating PDF...`;
             
-            const isRanking = state.main === 'ranking';
-            const element = document.getElementById(isRanking ? 'ranking-board-content' : 'export-container');
-            
+            const element = document.getElementById('export-container');
             const scrolls = element.querySelectorAll('.overflow-y-auto');
             scrolls.forEach(el => { el.classList.remove('max-h-56', 'overflow-y-auto'); });
+            document.querySelectorAll('.stat-card').forEach(el => { el.style.transform = 'none'; el.style.boxShadow = 'none'; });
             
-            const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#f8fafc' });
-            
-            scrolls.forEach(el => { el.classList.add('max-h-56', 'overflow-y-auto'); });
-            btnObj.innerHTML = `<svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg> Share WA`;
+            const opt = {
+                margin: 0.3, filename: 'temp.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } 
+            };
 
-            canvas.toBlob(async (blob) => {
+            try {
+                const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
+                
+                document.querySelectorAll('.stat-card').forEach(el => el.style = '');
+                scrolls.forEach(el => { el.classList.add('max-h-56', 'overflow-y-auto'); });
+
                 const dateStr = new Date().toISOString().split('T')[0];
-                let filename = `Report_${dateStr}.png`;
+                const isRanking = state.main === 'ranking';
+                
+                let filename = `Report_${dateStr}.pdf`;
                 let msgTitle = "Performance Report";
                 
-                if (state.sub === 'agent' && state.selectedName) { filename = `${state.selectedName.replace(/\s+/g, '_')}_${dateStr}.png`; msgTitle = `${state.selectedName} Dashboard`; }
-                else if (isRanking) { filename = `Ranking_${dateStr}.png`; msgTitle = `Agent Rankings (${FY_MONTHS[state.selectedMonth]} FY${state.selectedYear})`; }
+                if (state.sub === 'agent' && state.selectedName) { 
+                    filename = `${toTitleCase(state.selectedName).replace(/\s+/g, '_')}_${dateStr}.pdf`; 
+                    msgTitle = `${toTitleCase(state.selectedName)} Dashboard`; 
+                } else if (isRanking) { 
+                    filename = `Ranking_${FY_MONTHS[state.selectedMonth]}_FY${state.selectedYear}.pdf`; 
+                    msgTitle = `Agent Rankings - ${FY_MONTHS[state.selectedMonth]} FY${state.selectedYear}`; 
+                }
                 
-                const file = new File([blob], filename, { type: 'image/png' });
-                const textMsg = `📊 *${msgTitle} - ${dateStr}*\nPlease find the detailed report attached.`;
+                const file = new File([pdfBlob], filename, { type: 'application/pdf' });
+                const textMsg = `📊 *${msgTitle}*\nPlease find the detailed report attached.`;
                 
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     try { await navigator.share({ title: msgTitle, text: textMsg, files: [file] }); } 
-                    catch (err) { fallbackDownload(URL.createObjectURL(blob), filename, textMsg); }
+                    catch (err) { fallbackDownload(URL.createObjectURL(pdfBlob), filename, textMsg); }
                 } else {
-                    fallbackDownload(URL.createObjectURL(blob), filename, textMsg);
+                    fallbackDownload(URL.createObjectURL(pdfBlob), filename, textMsg);
                 }
-            });
+            } catch (e) {
+                console.error(e);
+            }
+            btnObj.innerHTML = originalHTML;
         }
 
         function fallbackDownload(url, filename, textMsg) {
             const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
-            const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(textMsg + "\n\n_(Report image downloaded to your device, please attach it here)_")}`;
+            const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(textMsg + "\n\n_(The PDF report has been downloaded to your device, please attach it here)_")}`;
             window.open(waUrl, '_blank');
         }
 
@@ -626,12 +662,12 @@
 
                     return `
                     <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="p-3 text-[11px] font-medium text-slate-600">${dateStr}</td>
-                        <td class="p-3 text-[11px] font-bold text-slate-800">${p[COL_POLICY] || 'N/A'}</td>
-                        <td class="p-3 text-[11px] font-medium text-slate-600 truncate max-w-[150px]" title="${p[COL_INSURED]}">${p[COL_INSURED] || 'Unknown'}</td>
+                        <td class="p-3 text-[11px] font-medium text-slate-600 whitespace-nowrap">${dateStr}</td>
+                        <td class="p-3 text-[11px] font-bold text-slate-800 whitespace-nowrap">${p[COL_POLICY] || 'N/A'}</td>
+                        <td class="p-3 text-[11px] font-medium text-slate-600 truncate max-w-[150px]" title="${toTitleCase(p[COL_INSURED])}">${toTitleCase(p[COL_INSURED]) || 'Unknown'}</td>
                         <td class="p-3 text-[11px] font-medium text-slate-500 truncate max-w-[120px]" title="${p[COL_PRODUCT]}">${p[COL_PRODUCT] || '-'}</td>
-                        <td class="p-3 text-[11px] font-bold text-blue-600">${siStr}</td>
-                        <td class="p-3 text-[11px] font-bold ${color} text-right">${sign}₹${Math.abs(prem).toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
+                        <td class="p-3 text-[11px] font-bold text-blue-600 whitespace-nowrap">${siStr}</td>
+                        <td class="p-3 text-[11px] font-bold ${color} text-right whitespace-nowrap">${sign}₹${Math.abs(prem).toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
                     </tr>`;
                 }).join('');
             }
@@ -655,7 +691,7 @@
             const calYear = mIndex < 9 ? state.selectedYear : state.selectedYear + 1;
             const calMonth = (mIndex + 3) % 12;
 
-            document.getElementById('rb-title').innerText = state.sub === 'gwp_rank' ? 'Top GWP Agents' : 'Top NOP Agents';
+            document.getElementById('rb-title').innerText = state.sub === 'gwp_rank' ? 'Top GWP Ranking' : 'Top NOP Ranking';
             document.getElementById('rb-subtitle').innerText = `${FY_MONTHS[mIndex]} FY${state.selectedYear}-${state.selectedYear+1}`;
             document.getElementById('rb-metric-label').innerText = state.sub === 'gwp_rank' ? 'Premium (GWP)' : 'Policies (NOP)';
 
@@ -672,9 +708,11 @@
                     const isCancelTx = tType.includes('cancel'); 
                     
                     if (isFreshBaseTx || isCancelTx) {
-                        const agent = row[COL_AGENT];
+                        const agent = toTitleCase(row[COL_AGENT]);
+                        const manager = toTitleCase(row[COL_MANAGER]);
+                        
                         if (agent) {
-                            if (!agents[agent]) agents[agent] = { gwp: 0, nop: 0 };
+                            if (!agents[agent]) agents[agent] = { gwp: 0, nop: 0, manager: manager };
                             const prem = parseFloat(row[COL_PREM]) || 0;
                             if (isFreshBaseTx) { agents[agent].nop += 1; agents[agent].gwp += prem; } 
                             else { agents[agent].nop -= 1; agents[agent].gwp += (prem > 0 ? -Math.abs(prem) : prem); }
@@ -689,10 +727,10 @@
             sorted.sort((a, b) => {
                 if (state.sub === 'gwp_rank') {
                     if (agents[b].gwp !== agents[a].gwp) return agents[b].gwp - agents[a].gwp;
-                    return agents[b].nop - agents[a].nop;
+                    return agents[b].nop - agents[a].nop; // Tie breaker
                 } else {
                     if (agents[b].nop !== agents[a].nop) return agents[b].nop - agents[a].nop;
-                    return agents[b].gwp - agents[a].gwp;
+                    return agents[b].gwp - agents[a].gwp; // Tie breaker
                 }
             });
 
@@ -712,17 +750,16 @@
                 const score = state.sub === 'gwp_rank' 
                     ? `₹${agents[agent].gwp.toLocaleString('en-IN', {maximumFractionDigits:0})}`
                     : `${agents[agent].nop} NOP`;
-                const subScore = state.sub === 'gwp_rank' ? `${agents[agent].nop} NOP` : `₹${agents[agent].gwp.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
 
                 return `
                 <div class="flex items-center p-3 rounded-xl shadow-sm border bg-white border-slate-100 mb-3">
                     <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm ${rankClass} shadow-sm shrink-0">${medal}</div>
                     <div class="ml-4 flex-1 truncate pr-4">
-                        <div class="font-bold text-slate-700 text-sm truncate">${agent}</div>
+                        <div class="font-bold text-slate-800 text-sm truncate">${agent}</div>
+                        <div class="text-[10px] font-medium text-slate-400 truncate mt-0.5">Mgr: ${agents[agent].manager || 'N/A'}</div>
                     </div>
                     <div class="text-right shrink-0">
-                        <div class="font-black text-slate-800 text-sm tracking-tight">${score}</div>
-                        <div class="text-[9px] font-bold text-slate-400 uppercase">${subScore}</div>
+                        <div class="font-black ${state.sub === 'gwp_rank' ? 'text-blue-600' : 'text-amber-500'} text-base tracking-tight">${score}</div>
                     </div>
                 </div>`;
             }).join('');
@@ -745,7 +782,7 @@
                 if (agentRow) {
                     document.getElementById('agent-profile').classList.remove('hidden');
                     document.getElementById('agent-profile').classList.add('flex');
-                    document.getElementById('agent-name-display').innerText = state.selectedName;
+                    document.getElementById('agent-name-display').innerText = toTitleCase(state.selectedName);
                     document.getElementById('agent-initials').innerText = state.selectedName.substring(0, 2).toUpperCase();
                     document.getElementById('agent-imd').innerText = agentRow[COL_IMD_CODE] || 'N/A';
                     document.getElementById('agent-agreement').innerText = agentRow[COL_AGR_CODE] || 'N/A';
@@ -759,11 +796,8 @@
                 freshNOP: 0, freshAmount: 0, baseNOP: 0, renRenewed: 0, renMissed: 0, yetToRenew: 0, isFuture: false
             }));
 
-            let totalFreshAmt = 0, totalFreshNOP = 0;
-            let prevFreshAmt = 0, prevFreshNOP = 0;
-            let totalBaseNOP = 0, totalRenewed = 0, totalMissed = 0, totalYet = 0;
-            let prevBaseNOP = 0, prevRenewed = 0;
-
+            let totalFreshAmt = 0, totalFreshNOP = 0, prevFreshAmt = 0, prevFreshNOP = 0;
+            let totalBaseNOP = 0, totalRenewed = 0, totalMissed = 0, totalYet = 0, prevBaseNOP = 0, prevRenewed = 0;
             let productBreakdown = {}, siBreakdown = {}, agentLB = {};
             let retentionYr1Base = 0, retentionYr1Ren = 0, retentionYr2Base = 0, retentionYr2Ren = 0; 
 
@@ -783,7 +817,7 @@
                 
                 const tType = (row[COL_TRANSACTION] || '').toString().toLowerCase();
                 const premium = parseFloat(row[COL_PREM]) || 0;
-                const agent = row[COL_AGENT] || 'Unknown';
+                const agent = toTitleCase(row[COL_AGENT] || 'Unknown');
 
                 const isFreshBaseTx = tType.includes('fresh') || tType.includes('roll over');
                 const isRenewalTx = tType.includes('our renewal');
@@ -1019,19 +1053,29 @@
                                 <span class="text-blue-600 text-[10px] font-bold bg-blue-50 px-1.5 py-0.5 rounded group-hover:bg-blue-100 transition-colors">${data.freshNOP} NOP</span>
                             </div>
                             <div class="text-sm font-extrabold text-slate-800 truncate tracking-tight">₹${data.freshAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                            <div class="mt-2 text-[9px] text-slate-400 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center font-semibold">View Drill-down <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg></div>
                         </div>
                     </div>`;
                 } else {
-                    const badge = data.isFuture ? `<span class="bg-amber-50 text-amber-600 text-[9px] font-bold px-1.5 py-0.5 rounded group-hover:bg-amber-100">Future</span>` : ``;
+                    const badge = data.isFuture 
+                        ? `<span class="bg-amber-50 text-amber-600 text-[9px] font-bold px-1.5 py-0.5 rounded group-hover:bg-amber-100">Future</span>`
+                        : ``;
+
                     html += `
                     <div class="bg-white rounded-xl border border-slate-100 p-4 stat-card group relative" onclick="openDrillDown(${index})">
                         <div class="absolute inset-0 bg-slate-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl z-0"></div>
                         <div class="relative z-10">
-                            <div class="flex justify-between items-center mb-2"><span class="text-xs font-bold text-slate-400 uppercase group-hover:text-slate-600 transition-colors">${monthName}</span>${badge}</div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-slate-400 uppercase group-hover:text-slate-600 transition-colors">${monthName}</span>
+                                ${badge}
+                            </div>
                             <div class="text-[10px] font-semibold text-slate-500 mb-2">Base: <span class="text-slate-800 font-bold">${data.baseNOP}</span></div>
                             <div class="space-y-1 mt-2 pt-2 border-t border-slate-50">
                                 <div class="flex justify-between text-[11px]"><span class="text-slate-500">Renewed</span><span class="text-emerald-600 font-bold">${data.renRenewed}</span></div>
-                                ${data.isFuture ? `<div class="flex justify-between text-[11px]"><span class="text-amber-500">Pending</span><span class="text-amber-500 font-bold">${data.yetToRenew}</span></div>` : `<div class="flex justify-between text-[11px]"><span class="text-slate-500">Missed</span><span class="text-rose-500 font-bold">${data.renMissed}</span></div>`}
+                                ${data.isFuture 
+                                    ? `<div class="flex justify-between text-[11px]"><span class="text-amber-500">Pending</span><span class="text-amber-500 font-bold">${data.yetToRenew}</span></div>` 
+                                    : `<div class="flex justify-between text-[11px]"><span class="text-slate-500">Missed</span><span class="text-rose-500 font-bold">${data.renMissed}</span></div>`
+                                }
                             </div>
                         </div>
                     </div>`;
