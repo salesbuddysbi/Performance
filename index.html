@@ -54,7 +54,7 @@
     </div>
 
     <!-- GENERAL DRILL-DOWN MODAL -->
-    <div id="drilldown-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[90] hidden p-4">
+    <div id="drilldown-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[90] hidden p-4" onclick="if(event.target === this) closeModal()">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col slide-up overflow-hidden border border-slate-100">
             <div class="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50">
                 <div>
@@ -87,7 +87,7 @@
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
                 </div>
                 <h2 class="text-lg font-bold text-slate-800">Fresh Business</h2>
-                <p class="text-slate-400 text-xs mt-1">GWP, NOP & Activations</p>
+                <p class="text-slate-400 text-xs mt-1">Fresh & Rollover GWP, NOP & Activations</p>
             </button>
             <button onclick="navToRole('renewal')" class="bg-white p-7 rounded-3xl shadow-sm hover:shadow-xl transition-all transform hover:-translate-y-1.5 border border-slate-200 group flex flex-col items-center text-center">
                 <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
@@ -322,7 +322,7 @@
                         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 col-span-2 md:col-span-3 lg:col-span-6 flex items-center justify-between">
                             <div>
                                 <h2 class="text-sm font-bold text-slate-800">Agent Monthly Activation Distribution (YTD Summary)</h2>
-                                <p class="text-[11px] text-slate-400 font-medium mt-0.5">Pure Fresh GWP &ge; &#8377;15,000 / month per agent</p>
+                                <p class="text-[11px] text-slate-400 font-medium mt-0.5">Fresh & Rollover GWP &ge; &#8377;15,000 / month per agent</p>
                             </div>
                             <div class="text-xs font-extrabold bg-blue-50 text-blue-600 px-4 py-2 rounded-xl border border-blue-100 shadow-inner" id="act-total">Total Activations: 0</div>
                         </div>
@@ -352,19 +352,19 @@
                         </div>
                     </div>
 
-                    <!-- FRESH BREAKDOWNS (Pure Fresh Only) -->
+                    <!-- FRESH BREAKDOWNS -->
                     <div id="fresh-breakdowns" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
                             <h2 class="text-xs font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center justify-between uppercase tracking-wider">
                                 Product Wise Performance
-                                <span class="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold border border-blue-100">Pure Fresh</span>
+                                <span class="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold border border-blue-100">Fresh & Rollover</span>
                             </h2>
                             <div id="product-list" class="space-y-3"></div>
                         </div>
                         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
                             <h2 class="text-xs font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center justify-between uppercase tracking-wider">
                                 Sum Insured Wise
-                                <span class="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold border border-blue-100">Pure Fresh</span>
+                                <span class="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold border border-blue-100">Fresh & Rollover</span>
                             </h2>
                             <div id="si-list" class="space-y-3"></div>
                         </div>
@@ -374,7 +374,7 @@
                     <div id="persistency-tracker" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mt-2">
                         <h2 class="text-xs font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center justify-between uppercase tracking-wider">
                             Historical Retention Tracker
-                            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded">Proxy</span>
+                            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded">Validated via Policy No</span>
                         </h2>
                         <div class="grid grid-cols-2 gap-4" id="persistency-stats"></div>
                     </div>
@@ -405,45 +405,124 @@
     </div>
 
     <script>
-        const COL_POLICY = "Policy No";
-        const COL_INSURED = "Insured Name";
-        const COL_AGENT = "Intermediary Name";
-        const COL_MANAGER = "SSM Name";
-        const COL_IMD_CODE = "Intermediary Code";
-        const COL_AGR_CODE = "Agreement Code";
-        const COL_DATE = "Policy Start Date";
-        const COL_PREM = "GWP";
-        const COL_TRANSACTION = "Transaction Type";
-        const COL_PRODUCT = "Product Name";
-        const COL_SUM_INSURED = "Total Sum Insured";
+        const COL_POLICY_KEYS = ["policy no", "policyno", "policy number"];
+        const COL_PREV_POLICY_KEYS = ["previous policy", "prev policy"];
+        const COL_ALT_POLICY_KEYS = ["alternate policy", "alt policy"];
+        const COL_INSURED_KEYS = ["insured name", "customer name"];
+        const COL_AGENT_KEYS = ["intermediary name", "agent name", "agent"];
+        const COL_MANAGER_KEYS = ["ssm name", "manager name"];
+        const COL_IMD_CODE_KEYS = ["intermediary code", "imd code"];
+        const COL_AGR_CODE_KEYS = ["agreement code"];
+        const COL_DATE_KEYS = ["policy start date", "start date"];
+        const COL_END_DATE_KEYS = ["policy end date", "end date"];
+        const COL_PREM_KEYS = ["gwp", "premium"];
+        const COL_TRANSACTION_KEYS = ["transaction type", "type"];
+        const COL_PRODUCT_KEYS = ["product name", "product"];
+        const COL_SUM_INSURED_KEYS = ["total sum insured", "sum insured", "si"];
 
         const FY_MONTHS = ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
 
         let rawData = [];
         let chartInstance = null;
         let state = { main: null, sub: null, selectedYear: null, selectedName: null, selectedMonth: null };
-        let cachedLeaderboardData = { fresh: {}, renewal: {} };
+
+        function getColValue(row, possibleKeys) {
+            if (!row || typeof row !== 'object') return "";
+            const rowKeys = Object.keys(row);
+            for (let pk of possibleKeys) {
+                const pkClean = pk.toLowerCase().replace(/[^a-z0-9]/g, '');
+                for (let k of rowKeys) {
+                    const kClean = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    if (kClean === pkClean || kClean.includes(pkClean)) return row[k];
+                }
+            }
+            return "";
+        }
+
+        // ROLLOVER IS CLASSIFIED AS FRESH BUSINESS
+        function parseTransactionType(typeStr) {
+            const tType = (typeStr || '').toString().toLowerCase().trim();
+            const isEndorsement = tType.includes('endorsement');
+            const isCancel = tType.includes('cancel');
+            
+            if (isEndorsement) return { isCancel: false, isRenewal: false, isFresh: false, isRetentionBase: false };
+
+            // Exclude "roll" from renewals entirely
+            const isRenewal = (tType.includes('renewal') || tType.includes('rnw')) && !tType.includes('roll');
+            
+            // Treat "roll" (rollover) as fresh business
+            const isFresh = (tType.includes('fresh') || tType.includes('new') || tType === 'nb' || tType.includes('roll')) && !isRenewal && !isCancel;
+            
+            const isRetentionBase = isFresh || isRenewal;
+            return { isCancel, isRenewal, isFresh, isRetentionBase };
+        }
 
         function parseNumber(val) {
             if (val === undefined || val === null || val === '') return 0;
-            if (typeof val === 'number') return val;
-            const str = val.toString().replace(/,/g, '').trim();
+            if (typeof val === 'number') return isNaN(val) ? 0 : val;
+            const str = val.toString().replace(/[^0-9.\-]/g, '');
             const num = parseFloat(str);
             return isNaN(num) ? 0 : num;
         }
 
+        // TIMEZONE-FREE DATE PARSER
         function parseExcelDate(val) {
-            if (!val) return null;
-            if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
-            let d = new Date(val);
-            if (!isNaN(d.getTime())) return d;
+            if (val === undefined || val === null || val === '') return null;
             
-            if (typeof val === 'string') {
-                const parts = val.trim().split(/[-/]/);
-                if (parts.length === 3) {
-                    const fallback = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-                    if (!isNaN(fallback.getTime())) return fallback;
+            let y, m, d;
+
+            if (typeof val === 'number') {
+                let tempDate = new Date(Math.round((val - 25569) * 86400000));
+                y = tempDate.getUTCFullYear();
+                m = tempDate.getUTCMonth() + 1;
+                d = tempDate.getUTCDate();
+            } else if (val instanceof Date) {
+                if (isNaN(val.getTime())) return null;
+                y = val.getFullYear();
+                m = val.getMonth() + 1;
+                d = val.getDate();
+            } else {
+                let s = val.toString().trim().split(/[\sT]+/)[0];
+                
+                // ISO YYYY-MM-DD
+                let match = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);
+                if (match) {
+                    y = parseInt(match[1], 10);
+                    m = parseInt(match[2], 10);
+                    d = parseInt(match[3], 10);
+                } else {
+                    // Prioritize DD/MM/YYYY text formatting
+                    match = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/);
+                    if (match) {
+                        d = parseInt(match[1], 10);
+                        m = parseInt(match[2], 10);
+                        y = parseInt(match[3], 10);
+                        if (y < 100) y += 2000;
+                        if (m > 12) { let temp = m; m = d; d = temp; }
+                    } else {
+                        // 1-Sep-2026
+                        const monthMap = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 };
+                        match = s.match(/^(\d{1,2})[-\/.\s]+([a-zA-Z]{3,})[-\/.\s]+(\d{2,4})/);
+                        if (match) {
+                            d = parseInt(match[1], 10);
+                            let mStr = match[2].toLowerCase().substring(0,3);
+                            m = monthMap[mStr];
+                            y = parseInt(match[3], 10);
+                            if (y < 100) y += 2000;
+                        } else {
+                            let temp = new Date(s);
+                            if (!isNaN(temp.getTime())) {
+                                y = temp.getFullYear();
+                                m = temp.getMonth() + 1;
+                                d = temp.getDate();
+                            }
+                        }
+                    }
                 }
+            }
+
+            if (y && m && d) {
+                return new Date(y, m - 1, d, 12, 0, 0);
             }
             return null;
         }
@@ -458,6 +537,10 @@
             document.getElementById('file-upload').addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file) loadExcel(file);
+            });
+
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeModal();
             });
         });
 
@@ -481,7 +564,7 @@
 
         function parseExcelData(buffer) {
             try {
-                const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
+                const workbook = XLSX.read(buffer, { type: 'array' });
                 rawData = [];
                 workbook.SheetNames.forEach(sheetName => {
                     const sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
@@ -500,7 +583,7 @@
 
                 document.getElementById('upload-overlay').classList.add('hidden');
                 showView('view-home');
-            } catch (err) { alert("Error parsing Excel file. Please ensure valid format."); }
+            } catch (err) { alert("Error parsing Excel file. Please ensure a valid format."); }
         }
 
         function showView(viewId) {
@@ -521,7 +604,7 @@
                 document.getElementById('role-standard').classList.add('hidden');
                 document.getElementById('role-ranking').classList.remove('hidden');
             } else {
-                breadcrumb.innerText = mainModule === 'fresh' ? 'Fresh Business' : 'Renewal Performance';
+                breadcrumb.innerText = mainModule === 'fresh' ? 'Fresh & Rollover Business' : 'Renewal Performance';
                 title.innerText = mainModule === 'fresh' ? 'Fresh Business Module' : 'Renewal Performance Module';
                 document.getElementById('role-standard').classList.remove('hidden');
                 document.getElementById('role-ranking').classList.add('hidden');
@@ -576,7 +659,7 @@
         function populateYears() {
             const yearSelect = document.getElementById('year-select');
             const years = [...new Set(rawData.map(row => {
-                const d = parseExcelDate(row[COL_DATE]);
+                const d = parseExcelDate(getColValue(row, COL_DATE_KEYS));
                 if (!d) return null;
                 return d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1;
             }).filter(y => y !== null))].sort((a, b) => b - a);
@@ -609,16 +692,16 @@
                     renderDashboard();
                 } else {
                     const nameSelect = document.getElementById('name-select');
-                    const colKey = state.sub === 'agent' ? COL_AGENT : COL_MANAGER;
+                    const colKeys = state.sub === 'agent' ? COL_AGENT_KEYS : COL_MANAGER_KEYS;
                     
                     const filtered = rawData.filter(row => {
-                        const d = parseExcelDate(row[COL_DATE]);
+                        const d = parseExcelDate(getColValue(row, COL_DATE_KEYS));
                         if (!d) return false;
                         const rowFY = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1;
                         return rowFY === state.selectedYear;
                     });
 
-                    const names = [...new Set(filtered.map(row => toTitleCase(row[colKey])).filter(n => n))].sort();
+                    const names = [...new Set(filtered.map(row => toTitleCase(getColValue(row, colKeys))).filter(n => n))].sort();
                     nameSelect.innerHTML = '<option value="">Choose ' + (state.sub === 'agent' ? 'Agent' : 'Manager') + '</option>' + names.map(n => `<option value="${n}">${n}</option>`).join('');
                     resetDashboard();
                 }
@@ -662,7 +745,6 @@
             return ``;
         }
 
-        // === POLICY DRILL DOWN (NOP / Month Click) ===
         function openPolicyDrillDown(monthIndex) {
             const monthName = FY_MONTHS[monthIndex];
             document.getElementById('modal-title').innerText = `${monthName} FY${state.selectedYear}-${state.selectedYear+1}`;
@@ -670,7 +752,7 @@
             const tbody = document.getElementById('modal-table-body');
             
             if (state.main === 'fresh') {
-                document.getElementById('modal-subtitle').innerText = "Policy-Level Details (Fresh Business)";
+                document.getElementById('modal-subtitle').innerText = "Policy-Level Details (Fresh & Rollover Business)";
                 
                 thead.innerHTML = `
                     <tr>
@@ -684,7 +766,7 @@
                     </tr>`;
 
                 let policies = rawData.filter(row => {
-                    const date = parseExcelDate(row[COL_DATE]);
+                    const date = parseExcelDate(getColValue(row, COL_DATE_KEYS));
                     if(!date) return false;
                     
                     const month = date.getMonth();
@@ -694,49 +776,43 @@
 
                     if (rowFyMonthIndex !== monthIndex || rowFY !== state.selectedYear) return false;
                     
-                    if (state.sub === 'agent' && toTitleCase(row[COL_AGENT]) !== state.selectedName) return false;
-                    if (state.sub === 'manager' && toTitleCase(row[COL_MANAGER]) !== state.selectedName) return false;
+                    if (state.sub === 'agent' && toTitleCase(getColValue(row, COL_AGENT_KEYS)) !== state.selectedName) return false;
+                    if (state.sub === 'manager' && toTitleCase(getColValue(row, COL_MANAGER_KEYS)) !== state.selectedName) return false;
 
-                    const tType = (row[COL_TRANSACTION] || '').toString().toLowerCase();
-                    if (tType.includes('endorsement')) return false;
-
-                    const isFreshBaseTx = tType.includes('fresh') || tType.includes('roll over');
-                    return isFreshBaseTx || tType.includes('cancel');
+                    const tx = parseTransactionType(getColValue(row, COL_TRANSACTION_KEYS));
+                    return tx.isFresh || tx.isCancel;
                 });
 
-                // Chronological Ascending Sort
-                policies.sort((a, b) => (parseExcelDate(a[COL_DATE]) || new Date(0)) - (parseExcelDate(b[COL_DATE]) || new Date(0)));
+                policies.sort((a, b) => (parseExcelDate(getColValue(a, COL_DATE_KEYS)) || new Date(0)) - (parseExcelDate(getColValue(b, COL_DATE_KEYS)) || new Date(0)));
 
                 if (policies.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" class="p-5 text-center text-xs text-slate-500 font-medium">No fresh business policies recorded for this month.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="7" class="p-5 text-center text-xs text-slate-500 font-medium">No fresh or rollover business recorded for this month.</td></tr>`;
                 } else {
                     tbody.innerHTML = policies.map(p => {
-                        const d = parseExcelDate(p[COL_DATE]);
+                        const d = parseExcelDate(getColValue(p, COL_DATE_KEYS));
                         const dateStr = d ? `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}` : '-';
-                        const prem = parseNumber(p[COL_PREM]);
-                        const siStr = formatSumInsured(p[COL_SUM_INSURED]);
-                        const type = (p[COL_TRANSACTION] || '').toLowerCase();
-                        const isCancel = type.includes('cancel');
+                        const prem = parseNumber(getColValue(p, COL_PREM_KEYS));
+                        const siStr = formatSumInsured(getColValue(p, COL_SUM_INSURED_KEYS));
+                        const tx = parseTransactionType(getColValue(p, COL_TRANSACTION_KEYS));
 
                         return `
                         <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
                             <td class="p-3 text-[11px] font-medium text-slate-600 whitespace-nowrap">${dateStr}</td>
-                            <td class="p-3 text-[11px] font-bold text-slate-800 whitespace-nowrap">${p[COL_POLICY] || 'N/A'}</td>
-                            <td class="p-3 text-[11px] font-bold text-blue-600 truncate max-w-[140px]">${toTitleCase(p[COL_AGENT]) || 'N/A'}</td>
-                            <td class="p-3 text-[11px] font-medium text-slate-600 truncate max-w-[140px]">${toTitleCase(p[COL_INSURED]) || 'Unknown'}</td>
-                            <td class="p-3 text-[11px] font-medium text-slate-500 truncate max-w-[120px]">${p[COL_PRODUCT] || '-'}</td>
+                            <td class="p-3 text-[11px] font-bold text-slate-800 whitespace-nowrap">${getColValue(p, COL_POLICY_KEYS) || 'N/A'}</td>
+                            <td class="p-3 text-[11px] font-bold text-blue-600 truncate max-w-[140px]">${toTitleCase(getColValue(p, COL_AGENT_KEYS)) || 'N/A'}</td>
+                            <td class="p-3 text-[11px] font-medium text-slate-600 truncate max-w-[140px]">${toTitleCase(getColValue(p, COL_INSURED_KEYS)) || 'Unknown'}</td>
+                            <td class="p-3 text-[11px] font-medium text-slate-500 truncate max-w-[120px]">${getColValue(p, COL_PRODUCT_KEYS) || '-'}</td>
                             <td class="p-3 text-[11px] font-bold text-slate-700 whitespace-nowrap">${siStr}</td>
                             <td class="p-3 text-right whitespace-nowrap">
                                 <div class="flex flex-col items-end gap-1">
-                                    <span class="text-[11px] font-bold ${isCancel ? 'text-rose-500' : 'text-slate-800'}">₹${Math.abs(prem).toLocaleString('en-IN', {maximumFractionDigits:0})}</span>
-                                    ${isCancel ? `<span class="bg-rose-100 text-rose-700 px-2 py-0.5 rounded text-[9px] font-bold">Cancelled</span>` : ''}
+                                    <span class="text-[11px] font-bold ${tx.isCancel ? 'text-rose-500' : 'text-slate-800'}">₹${Math.abs(prem).toLocaleString('en-IN', {maximumFractionDigits:0})}</span>
+                                    ${tx.isCancel ? `<span class="bg-rose-100 text-rose-700 px-2 py-0.5 rounded text-[9px] font-bold">Cancelled</span>` : ''}
                                 </div>
                             </td>
                         </tr>`;
                     }).join('');
                 }
             } else {
-                // RENEWAL DRILL DOWN
                 document.getElementById('modal-subtitle').innerText = "Base Policies Due for Renewal";
 
                 thead.innerHTML = `
@@ -754,33 +830,60 @@
                 let currentYearRenewals = [];
                 
                 rawData.forEach(row => {
-                    const date = parseExcelDate(row[COL_DATE]);
+                    const date = parseExcelDate(getColValue(row, COL_DATE_KEYS));
+                    const endDate = parseExcelDate(getColValue(row, COL_END_DATE_KEYS));
                     if(!date) return;
 
                     const rowFY = date.getMonth() >= 3 ? date.getFullYear() : date.getFullYear() - 1;
-                    const rowFyMonthIndex = date.getMonth() >= 3 ? date.getMonth() - 3 : date.getMonth() + 9;
                     
-                    const agent = toTitleCase(row[COL_AGENT] || '');
-                    const manager = toTitleCase(row[COL_MANAGER] || '');
+                    let expFY, expFyMonthIndex;
+                    if (endDate) {
+                        const expMonth = endDate.getMonth();
+                        const expYear = endDate.getFullYear();
+                        expFY = expMonth >= 3 ? expYear : expYear - 1;
+                        expFyMonthIndex = expMonth >= 3 ? expMonth - 3 : expMonth + 9;
+                    } else {
+                        const expMonth = date.getMonth();
+                        const expYear = date.getFullYear() + 1;
+                        expFY = expMonth >= 3 ? expYear : expYear - 1;
+                        expFyMonthIndex = expMonth >= 3 ? expMonth - 3 : expMonth + 9;
+                    }
+                    
+                    const agent = toTitleCase(getColValue(row, COL_AGENT_KEYS) || '');
+                    const manager = toTitleCase(getColValue(row, COL_MANAGER_KEYS) || '');
                     
                     if (state.sub === 'agent' && agent !== state.selectedName) return;
                     if (state.sub === 'manager' && manager !== state.selectedName) return;
 
-                    const tType = (row[COL_TRANSACTION] || '').toString().toLowerCase();
-                    if (tType.includes('endorsement') || tType.includes('cancel')) return;
+                    const tx = parseTransactionType(getColValue(row, COL_TRANSACTION_KEYS));
 
-                    const isBase = tType.includes('fresh') || tType.includes('roll over') || tType.includes('our renewal');
-                    const isRen = tType.includes('our renewal');
-
-                    if (rowFY === state.selectedYear - 1 && isBase && rowFyMonthIndex === monthIndex) baseDue.push(row);
-                    if (rowFY === state.selectedYear && isRen) currentYearRenewals.push(row);
+                    if (expFY === state.selectedYear && tx.isRetentionBase && !tx.isCancel && expFyMonthIndex === monthIndex) baseDue.push(row);
+                    if (rowFY === state.selectedYear && tx.isRenewal) currentYearRenewals.push(row);
                 });
 
-                let renPool = currentYearRenewals.map(r => ({ sig: (toTitleCase(r[COL_INSURED]) + "|" + toTitleCase(r[COL_PRODUCT])).toLowerCase(), used: false }));
+                let renPool = currentYearRenewals.map(r => {
+                    const ins = toTitleCase(getColValue(r, COL_INSURED_KEYS));
+                    const prd = toTitleCase(getColValue(r, COL_PRODUCT_KEYS));
+                    return { 
+                        policyNo: (getColValue(r, COL_POLICY_KEYS) || '').toString().trim().toLowerCase(),
+                        prevPolicyNo: (getColValue(r, COL_PREV_POLICY_KEYS) || '').toString().trim().toLowerCase(),
+                        altPolicyNo: (getColValue(r, COL_ALT_POLICY_KEYS) || '').toString().trim().toLowerCase(),
+                        sig: (ins && prd) ? (ins + "|" + prd).toLowerCase() : "", 
+                        used: false 
+                    };
+                });
                 
                 let mappedPolicies = baseDue.map(p => {
-                    const sig = (toTitleCase(p[COL_INSURED]) + "|" + toTitleCase(p[COL_PRODUCT])).toLowerCase();
-                    let matchIdx = renPool.findIndex(r => !r.used && r.sig === sig);
+                    const basePolicyNo = (getColValue(p, COL_POLICY_KEYS) || '').toString().trim().toLowerCase();
+                    const ins = toTitleCase(getColValue(p, COL_INSURED_KEYS));
+                    const prd = toTitleCase(getColValue(p, COL_PRODUCT_KEYS));
+                    const sig = (ins && prd) ? (ins + "|" + prd).toLowerCase() : "";
+
+                    let matchIdx = renPool.findIndex(r => !r.used && (
+                        (basePolicyNo && (r.prevPolicyNo === basePolicyNo || r.altPolicyNo === basePolicyNo || r.policyNo === basePolicyNo)) ||
+                        (sig && r.sig === sig)
+                    ));
+                    
                     let isRenewed = false;
                     if (matchIdx !== -1) {
                         renPool[matchIdx].used = true;
@@ -789,16 +892,16 @@
                     return { ...p, _isRenewed: isRenewed };
                 });
 
-                mappedPolicies.sort((a, b) => (parseExcelDate(a[COL_DATE]) || new Date(0)) - (parseExcelDate(b[COL_DATE]) || new Date(0)));
+                mappedPolicies.sort((a, b) => (parseExcelDate(getColValue(a, COL_DATE_KEYS)) || new Date(0)) - (parseExcelDate(getColValue(b, COL_DATE_KEYS)) || new Date(0)));
 
                 if (mappedPolicies.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="7" class="p-5 text-center text-xs text-slate-500 font-medium">No policies due for renewal this month.</td></tr>`;
                 } else {
                     tbody.innerHTML = mappedPolicies.map(p => {
-                        const d = parseExcelDate(p[COL_DATE]);
+                        const d = parseExcelDate(getColValue(p, COL_DATE_KEYS));
                         const dateStr = d ? `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}` : '-';
-                        const prem = parseNumber(p[COL_PREM]);
-                        const siStr = formatSumInsured(p[COL_SUM_INSURED]);
+                        const prem = parseNumber(getColValue(p, COL_PREM_KEYS));
+                        const siStr = formatSumInsured(getColValue(p, COL_SUM_INSURED_KEYS));
                         
                         const statusBadge = p._isRenewed 
                             ? `<span class="bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">Renewed</span>` 
@@ -807,10 +910,10 @@
                         return `
                         <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
                             <td class="p-3 text-[11px] font-medium text-slate-600 whitespace-nowrap">${dateStr}</td>
-                            <td class="p-3 text-[11px] font-bold text-slate-800 whitespace-nowrap">${p[COL_POLICY] || 'N/A'}</td>
-                            <td class="p-3 text-[11px] font-bold text-indigo-600 truncate max-w-[140px]">${toTitleCase(p[COL_AGENT]) || 'N/A'}</td>
-                            <td class="p-3 text-[11px] font-medium text-slate-600 truncate max-w-[140px]">${toTitleCase(p[COL_INSURED]) || 'Unknown'}</td>
-                            <td class="p-3 text-[11px] font-medium text-slate-500 truncate max-w-[120px]">${p[COL_PRODUCT] || '-'}</td>
+                            <td class="p-3 text-[11px] font-bold text-slate-800 whitespace-nowrap">${getColValue(p, COL_POLICY_KEYS) || 'N/A'}</td>
+                            <td class="p-3 text-[11px] font-bold text-indigo-600 truncate max-w-[140px]">${toTitleCase(getColValue(p, COL_AGENT_KEYS)) || 'N/A'}</td>
+                            <td class="p-3 text-[11px] font-medium text-slate-600 truncate max-w-[140px]">${toTitleCase(getColValue(p, COL_INSURED_KEYS)) || 'Unknown'}</td>
+                            <td class="p-3 text-[11px] font-medium text-slate-500 truncate max-w-[120px]">${getColValue(p, COL_PRODUCT_KEYS) || '-'}</td>
                             <td class="p-3 text-[11px] font-bold text-slate-700 whitespace-nowrap">${siStr}</td>
                             <td class="p-3 text-right whitespace-nowrap">
                                 <div class="flex flex-col items-end gap-1">
@@ -825,7 +928,6 @@
             document.getElementById('drilldown-modal').classList.remove('hidden');
         }
 
-        // === AGENT ACTIVATIONS DRILL DOWN (Act Badge / Slab Click) ===
         function openActivationDrillDown(monthIndex, specificSlab = null) {
             const monthName = FY_MONTHS[monthIndex];
             document.getElementById('modal-title').innerText = `${monthName} FY${state.selectedYear}-${state.selectedYear+1} - Agent Activations`;
@@ -841,13 +943,13 @@
                     <th class="p-3 text-[10px] font-bold text-slate-500 uppercase">Manager</th>
                     <th class="p-3 text-[10px] font-bold text-slate-500 uppercase">Activation Slab</th>
                     <th class="p-3 text-[10px] font-bold text-slate-500 uppercase text-center">Fresh NOP</th>
-                    <th class="p-3 text-[10px] font-bold text-slate-500 uppercase text-right">Pure Fresh GWP</th>
+                    <th class="p-3 text-[10px] font-bold text-slate-500 uppercase text-right">Fresh GWP</th>
                 </tr>`;
 
             let agentMap = {};
 
             rawData.forEach(row => {
-                const date = parseExcelDate(row[COL_DATE]);
+                const date = parseExcelDate(getColValue(row, COL_DATE_KEYS));
                 if(!date) return;
                 
                 const month = date.getMonth();
@@ -857,19 +959,17 @@
 
                 if (rowFyMonthIndex !== monthIndex || rowFY !== state.selectedYear) return;
                 
-                const agent = toTitleCase(row[COL_AGENT] || '');
-                const manager = toTitleCase(row[COL_MANAGER] || '');
+                const agent = toTitleCase(getColValue(row, COL_AGENT_KEYS) || '');
+                const manager = toTitleCase(getColValue(row, COL_MANAGER_KEYS) || '');
                 
                 if (state.sub === 'agent' && agent !== state.selectedName) return;
                 if (state.sub === 'manager' && manager !== state.selectedName) return;
 
-                const tType = (row[COL_TRANSACTION] || '').toString().toLowerCase();
-                if (tType.includes('endorsement') || tType.includes('cancel')) return;
-
-                const isFresh = tType.includes('fresh') || tType.includes('roll over');
-                if (isFresh && agent) {
+                const tx = parseTransactionType(getColValue(row, COL_TRANSACTION_KEYS));
+                
+                if (tx.isFresh && agent) {
                     if (!agentMap[agent]) agentMap[agent] = { gwp: 0, nop: 0, manager: manager };
-                    agentMap[agent].gwp += parseNumber(row[COL_PREM]);
+                    agentMap[agent].gwp += parseNumber(getColValue(row, COL_PREM_KEYS));
                     agentMap[agent].nop += 1;
                 }
             });
@@ -899,7 +999,6 @@
                 list = list.filter(item => item.slabCode === specificSlab);
             }
 
-            // Sort by GWP descending
             list.sort((a, b) => b.gwp - a.gwp);
 
             if (list.length === 0) {
@@ -927,7 +1026,6 @@
 
         function closeModal() { document.getElementById('drilldown-modal').classList.add('hidden'); }
 
-        // === RANKING BOARD ===
         function renderRanking() {
             document.getElementById('empty-state').classList.add('hidden');
             document.getElementById('dashboard-content').classList.add('hidden');
@@ -936,29 +1034,27 @@
             const calYear = state.selectedMonth < 9 ? state.selectedYear : state.selectedYear + 1;
             const calMonth = (state.selectedMonth + 3) % 12;
 
-            document.getElementById('rb-title').innerText = state.sub === 'gwp_rank' ? 'Top GWP Ranking' : 'Top NOP Ranking';
+            document.getElementById('rb-title').innerText = state.sub === 'gwp_rank' ? 'Top Fresh & Rollover Ranking' : 'Top NOP Ranking';
             document.getElementById('rb-subtitle').innerText = `${FY_MONTHS[state.selectedMonth]} FY${state.selectedYear}-${state.selectedYear+1}`;
             document.getElementById('rb-metric-label').innerText = state.sub === 'gwp_rank' ? 'GWP Premium' : 'NOP Count';
 
             let agents = {};
 
             rawData.forEach(row => {
-                const d = parseExcelDate(row[COL_DATE]);
+                const d = parseExcelDate(getColValue(row, COL_DATE_KEYS));
                 if (!d) return;
 
                 if (d.getFullYear() === calYear && d.getMonth() === calMonth) {
-                    const tType = (row[COL_TRANSACTION] || '').toString().toLowerCase();
-                    const isFreshBaseTx = tType.includes('fresh') || tType.includes('roll over');
-                    const isCancelTx = tType.includes('cancel'); 
+                    const tx = parseTransactionType(getColValue(row, COL_TRANSACTION_KEYS));
                     
-                    if (isFreshBaseTx || isCancelTx) {
-                        const agent = toTitleCase(row[COL_AGENT]);
-                        const manager = toTitleCase(row[COL_MANAGER]);
+                    if (tx.isFresh || tx.isCancel) {
+                        const agent = toTitleCase(getColValue(row, COL_AGENT_KEYS));
+                        const manager = toTitleCase(getColValue(row, COL_MANAGER_KEYS));
                         
                         if (agent) {
                             if (!agents[agent]) agents[agent] = { gwp: 0, nop: 0, manager: manager };
-                            const prem = parseNumber(row[COL_PREM]);
-                            if (isFreshBaseTx) { agents[agent].nop += 1; agents[agent].gwp += prem; } 
+                            const prem = parseNumber(getColValue(row, COL_PREM_KEYS));
+                            if (tx.isFresh) { agents[agent].nop += 1; agents[agent].gwp += prem; } 
                             else { agents[agent].nop -= 1; agents[agent].gwp += (prem > 0 ? -Math.abs(prem) : prem); }
                         }
                     }
@@ -974,7 +1070,7 @@
 
             const listDiv = document.getElementById('rb-list');
             if (sorted.length === 0) {
-                listDiv.innerHTML = `<div class="text-center p-6 text-slate-400 text-sm font-medium">No fresh business recorded in ${FY_MONTHS[state.selectedMonth]}.</div>`;
+                listDiv.innerHTML = `<div class="text-center p-6 text-slate-400 text-sm font-medium">No fresh or rollover business recorded in ${FY_MONTHS[state.selectedMonth]}.</div>`;
                 return;
             }
 
@@ -1003,7 +1099,6 @@
             }).join('');
         }
 
-        // === DYNAMIC MTD LEADERBOARD RENDERER ===
         function renderLeaderboardsForSelectedMonth() {
             const mIdx = parseInt(document.getElementById('leaderboard-month-select').value);
             const mName = FY_MONTHS[mIdx];
@@ -1016,23 +1111,22 @@
 
                 let monthlyAgents = {};
                 rawData.forEach(row => {
-                    const date = parseExcelDate(row[COL_DATE]);
+                    const date = parseExcelDate(getColValue(row, COL_DATE_KEYS));
                     if (!date) return;
                     if (date.getFullYear() === calYear && date.getMonth() === calMonth) {
-                        const tType = (row[COL_TRANSACTION] || '').toString().toLowerCase();
-                        if (tType.includes('endorsement')) return;
-                        
-                        const isFresh = tType.includes('fresh') || tType.includes('roll over');
-                        const isCancel = tType.includes('cancel');
-                        const agent = toTitleCase(row[COL_AGENT] || '');
-                        const manager = toTitleCase(row[COL_MANAGER] || '');
+                        const tx = parseTransactionType(getColValue(row, COL_TRANSACTION_KEYS));
 
-                        const passes = state.sub === 'cluster' || (state.sub === 'manager' && manager === state.selectedName);
-                        if (passes && agent) {
-                            if (!monthlyAgents[agent]) monthlyAgents[agent] = { gwp: 0, nop: 0 };
-                            const prem = parseNumber(row[COL_PREM]);
-                            if (isFresh) { monthlyAgents[agent].gwp += prem; monthlyAgents[agent].nop += 1; }
-                            else if (isCancel) { monthlyAgents[agent].gwp -= Math.abs(prem); monthlyAgents[agent].nop -= 1; }
+                        if (tx.isFresh || tx.isCancel) {
+                            const agent = toTitleCase(getColValue(row, COL_AGENT_KEYS) || '');
+                            const manager = toTitleCase(getColValue(row, COL_MANAGER_KEYS) || '');
+
+                            const passes = state.sub === 'cluster' || (state.sub === 'manager' && manager === state.selectedName);
+                            if (passes && agent) {
+                                if (!monthlyAgents[agent]) monthlyAgents[agent] = { gwp: 0, nop: 0 };
+                                const prem = parseNumber(getColValue(row, COL_PREM_KEYS));
+                                if (tx.isFresh) { monthlyAgents[agent].gwp += prem; monthlyAgents[agent].nop += 1; }
+                                else if (tx.isCancel) { monthlyAgents[agent].gwp -= Math.abs(prem); monthlyAgents[agent].nop -= 1; }
+                            }
                         }
                     }
                 });
@@ -1047,28 +1141,75 @@
                 document.getElementById('lb-mtd-ren-title').innerText = `Top 3 MTD Retention (${mName})`;
                 
                 let monthlyAgents = {};
+                let mtdBase = [];
+                let currYrRen = [];
+
                 rawData.forEach(row => {
-                    const date = parseExcelDate(row[COL_DATE]);
+                    const date = parseExcelDate(getColValue(row, COL_DATE_KEYS));
+                    const endDate = parseExcelDate(getColValue(row, COL_END_DATE_KEYS));
                     if (!date) return;
 
                     const rowFY = date.getMonth() >= 3 ? date.getFullYear() : date.getFullYear() - 1;
-                    const rowFyMonthIndex = date.getMonth() >= 3 ? date.getMonth() - 3 : date.getMonth() + 9;
-                    if (rowFyMonthIndex !== mIdx) return;
+                    
+                    let expFY, expFyMonthIndex;
+                    if (endDate) {
+                        const expMonth = endDate.getMonth();
+                        const expYear = endDate.getFullYear();
+                        expFY = expMonth >= 3 ? expYear : expYear - 1;
+                        expFyMonthIndex = expMonth >= 3 ? expMonth - 3 : expMonth + 9;
+                    } else {
+                        const expMonth = date.getMonth();
+                        const expYear = date.getFullYear() + 1;
+                        expFY = expMonth >= 3 ? expYear : expYear - 1;
+                        expFyMonthIndex = expMonth >= 3 ? expMonth - 3 : expMonth + 9;
+                    }
 
-                    const agent = toTitleCase(row[COL_AGENT] || '');
-                    const manager = toTitleCase(row[COL_MANAGER] || '');
+                    const agent = toTitleCase(getColValue(row, COL_AGENT_KEYS) || '');
+                    const manager = toTitleCase(getColValue(row, COL_MANAGER_KEYS) || '');
                     const passes = state.sub === 'cluster' || (state.sub === 'manager' && manager === state.selectedName);
                     if (!passes || !agent) return;
 
-                    const tType = (row[COL_TRANSACTION] || '').toString().toLowerCase();
-                    if (tType.includes('endorsement') || tType.includes('cancel')) return;
+                    const tx = parseTransactionType(getColValue(row, COL_TRANSACTION_KEYS));
 
-                    const isBase = tType.includes('fresh') || tType.includes('roll over') || tType.includes('our renewal');
-                    const isRen = tType.includes('our renewal');
+                    if (expFY === state.selectedYear && tx.isRetentionBase && !tx.isCancel && expFyMonthIndex === mIdx) {
+                        mtdBase.push({agent, ...row});
+                    }
+                    if (rowFY === state.selectedYear && tx.isRenewal) {
+                        currYrRen.push(row);
+                    }
+                });
 
+                let renUsage = currYrRen.map(r => {
+                    const ins = toTitleCase(getColValue(r, COL_INSURED_KEYS));
+                    const prd = toTitleCase(getColValue(r, COL_PRODUCT_KEYS));
+                    return {
+                        policyNo: (getColValue(r, COL_POLICY_KEYS) || '').toString().trim().toLowerCase(),
+                        prevPolicyNo: (getColValue(r, COL_PREV_POLICY_KEYS) || '').toString().trim().toLowerCase(),
+                        altPolicyNo: (getColValue(r, COL_ALT_POLICY_KEYS) || '').toString().trim().toLowerCase(),
+                        sig: (ins && prd) ? (ins + "|" + prd).toLowerCase() : "",
+                        used: false
+                    };
+                });
+
+                mtdBase.forEach(b => {
+                    const agent = b.agent;
                     if (!monthlyAgents[agent]) monthlyAgents[agent] = { base: 0, ren: 0 };
-                    if (rowFY === state.selectedYear - 1 && isBase) monthlyAgents[agent].base += 1;
-                    if (rowFY === state.selectedYear && isRen) monthlyAgents[agent].ren += 1;
+                    monthlyAgents[agent].base += 1;
+
+                    const basePolicyNo = (getColValue(b, COL_POLICY_KEYS) || '').toString().trim().toLowerCase();
+                    const ins = toTitleCase(getColValue(b, COL_INSURED_KEYS));
+                    const prd = toTitleCase(getColValue(b, COL_PRODUCT_KEYS));
+                    const b_sig = (ins && prd) ? (ins + "|" + prd).toLowerCase() : "";
+
+                    let matchIdx = renUsage.findIndex(r => !r.used && (
+                        (basePolicyNo && (r.prevPolicyNo === basePolicyNo || r.altPolicyNo === basePolicyNo || r.policyNo === basePolicyNo)) ||
+                        (b_sig && r.sig === b_sig)
+                    ));
+
+                    if (matchIdx !== -1) {
+                        renUsage[matchIdx].used = true;
+                        monthlyAgents[agent].ren += 1;
+                    }
                 });
 
                 const tMtdRen = Object.keys(monthlyAgents).filter(a => monthlyAgents[a].base >= 1).sort((a,b) => (monthlyAgents[b].ren/monthlyAgents[b].base) - (monthlyAgents[a].ren/monthlyAgents[a].base)).slice(0, 3);
@@ -1076,20 +1217,20 @@
             }
         }
 
-        // === MAIN DASHBOARD RENDER ===
+        // MAIN DASHBOARD RENDER
         function renderDashboard() {
             document.getElementById('empty-state').classList.add('hidden');
             document.getElementById('ranking-board-content').classList.add('hidden');
             document.getElementById('dashboard-content').classList.remove('hidden');
 
             if (state.sub === 'agent' && state.selectedName) {
-                const agentRow = rawData.find(r => toTitleCase(r[COL_AGENT]) === state.selectedName);
+                const agentRow = rawData.find(r => toTitleCase(getColValue(r, COL_AGENT_KEYS)) === state.selectedName);
                 document.getElementById('agent-profile').classList.remove('hidden');
                 document.getElementById('agent-profile').classList.add('flex');
                 document.getElementById('agent-name-display').innerText = state.selectedName;
                 document.getElementById('agent-initials').innerText = state.selectedName.substring(0, 2).toUpperCase();
-                document.getElementById('agent-imd').innerText = agentRow ? (agentRow[COL_IMD_CODE] || 'N/A') : 'N/A';
-                document.getElementById('agent-agreement').innerText = agentRow ? (agentRow[COL_AGR_CODE] || 'N/A') : 'N/A';
+                document.getElementById('agent-imd').innerText = agentRow ? (getColValue(agentRow, COL_IMD_CODE_KEYS) || 'N/A') : 'N/A';
+                document.getElementById('agent-agreement').innerText = agentRow ? (getColValue(agentRow, COL_AGR_CODE_KEYS) || 'N/A') : 'N/A';
             } else {
                 document.getElementById('agent-profile').classList.add('hidden');
                 document.getElementById('agent-profile').classList.remove('flex');
@@ -1111,25 +1252,33 @@
             const currentMonth = now.getMonth(); 
 
             rawData.forEach(row => {
-                const date = parseExcelDate(row[COL_DATE]);
+                const date = parseExcelDate(getColValue(row, COL_DATE_KEYS));
+                const endDate = parseExcelDate(getColValue(row, COL_END_DATE_KEYS));
                 if (!date) return;
-
-                const tType = (row[COL_TRANSACTION] || '').toString().toLowerCase();
-                if (tType.includes('endorsement')) return;
 
                 const month = date.getMonth(); 
                 const year = date.getFullYear();
                 const rowFY = month >= 3 ? year : year - 1;
                 const fyMonthIndex = month >= 3 ? month - 3 : month + 9;
                 
-                const premium = parseNumber(row[COL_PREM]);
-                const agent = toTitleCase(row[COL_AGENT] || 'Unknown');
-                const manager = toTitleCase(row[COL_MANAGER] || 'Unknown');
+                let expFY, expFyMonthIndex;
+                if (endDate) {
+                    const expMonth = endDate.getMonth();
+                    const expYear = endDate.getFullYear();
+                    expFY = expMonth >= 3 ? expYear : expYear - 1;
+                    expFyMonthIndex = expMonth >= 3 ? expMonth - 3 : expMonth + 9;
+                } else {
+                    const expMonth = date.getMonth();
+                    const expYear = date.getFullYear() + 1;
+                    expFY = expMonth >= 3 ? expYear : expYear - 1;
+                    expFyMonthIndex = expMonth >= 3 ? expMonth - 3 : expMonth + 9;
+                }
+                
+                const premium = parseNumber(getColValue(row, COL_PREM_KEYS));
+                const agent = toTitleCase(getColValue(row, COL_AGENT_KEYS) || 'Unknown');
+                const manager = toTitleCase(getColValue(row, COL_MANAGER_KEYS) || 'Unknown');
 
-                const isFreshBaseTx = tType.includes('fresh') || tType.includes('roll over');
-                const isRenewalTx = tType.includes('our renewal');
-                const isBaseTx = isFreshBaseTx || isRenewalTx;
-                const isCancelTx = tType.includes('cancel'); 
+                const tx = parseTransactionType(getColValue(row, COL_TRANSACTION_KEYS));
 
                 if (state.sub === 'cluster' || state.sub === 'manager') {
                     if(!agentLB[agent]) agentLB[agent] = { ytdGWP:0, ytdNOP:0, ytdBase:0, ytdRen:0, basePolicies: [], renewals: [] };
@@ -1144,15 +1293,15 @@
                 if (state.main === 'fresh') {
                     if (rowFY === state.selectedYear) {
                         let finalPrem = 0, finalNop = 0;
-                        if (isFreshBaseTx) { finalNop = 1; finalPrem = premium; } 
-                        else if (isCancelTx) { finalNop = -1; finalPrem = premium > 0 ? -Math.abs(premium) : premium; }
+                        if (tx.isFresh) { finalNop = 1; finalPrem = premium; } 
+                        else if (tx.isCancel) { finalNop = -1; finalPrem = premium > 0 ? -Math.abs(premium) : premium; }
                         
                         if (passesLBFilter && finalNop !== 0) {
                             agentLB[agent].ytdGWP += finalPrem;
                             agentLB[agent].ytdNOP += finalNop;
                         }
 
-                        if (passesFilter && isFreshBaseTx) {
+                        if (passesFilter && tx.isFresh) {
                             if (!agentMonthlyPureGWP[agent]) agentMonthlyPureGWP[agent] = {};
                             if (!agentMonthlyPureGWP[agent][fyMonthIndex]) agentMonthlyPureGWP[agent][fyMonthIndex] = 0;
                             agentMonthlyPureGWP[agent][fyMonthIndex] += premium;
@@ -1165,9 +1314,9 @@
                             totalFreshAmt += finalPrem;
                         }
 
-                        if (passesFilter && isFreshBaseTx) {
-                            let prod = row[COL_PRODUCT] || 'Unspecified';
-                            let si = row[COL_SUM_INSURED] || 'Unspecified';
+                        if (passesFilter && tx.isFresh) {
+                            let prod = getColValue(row, COL_PRODUCT_KEYS) || 'Unspecified';
+                            let si = getColValue(row, COL_SUM_INSURED_KEYS) || 'Unspecified';
                             
                             if(!productBreakdown[prod]) productBreakdown[prod] = { nop: 0, prem: 0 };
                             productBreakdown[prod].nop += 1;
@@ -1179,20 +1328,20 @@
                         }
                     }
                     else if (rowFY === (state.selectedYear - 1) && passesFilter) {
-                        if (isFreshBaseTx) { prevFreshNOP += 1; prevFreshAmt += premium; }
-                        else if (isCancelTx) { prevFreshNOP -= 1; prevFreshAmt += (premium > 0 ? -Math.abs(premium) : premium); }
+                        if (tx.isFresh) { prevFreshNOP += 1; prevFreshAmt += premium; }
+                        else if (tx.isCancel) { prevFreshNOP -= 1; prevFreshAmt += (premium > 0 ? -Math.abs(premium) : premium); }
                     }
                 } 
                 else if (state.main === 'renewal') {
                     if (passesFilter) {
-                        if (rowFY === state.selectedYear - 1 && isBaseTx && !isCancelTx) basePool.push({...row, fyMonthIndex});
-                        if (rowFY === state.selectedYear && isRenewalTx) renPool.push(row);
-                        if (rowFY === state.selectedYear - 2 && isBaseTx && !isCancelTx) yr2BasePool.push(row);
-                        if (rowFY === state.selectedYear - 1 && isRenewalTx) yr2RenPool.push(row);
+                        if (expFY === state.selectedYear && tx.isRetentionBase && !tx.isCancel) basePool.push({...row, fyMonthIndex: expFyMonthIndex});
+                        if (rowFY === state.selectedYear && tx.isRenewal) renPool.push(row);
+                        if (expFY === state.selectedYear - 1 && tx.isRetentionBase && !tx.isCancel) yr2BasePool.push({...row, fyMonthIndex: expFyMonthIndex});
+                        if (rowFY === state.selectedYear - 1 && tx.isRenewal) yr2RenPool.push(row);
                     }
-                    if (passesLBFilter && !isCancelTx) {
-                        if (rowFY === state.selectedYear - 1 && isBaseTx) agentLB[agent].basePolicies.push({...row});
-                        if (rowFY === state.selectedYear && isRenewalTx) agentLB[agent].renewals.push({...row});
+                    if (passesLBFilter && !tx.isCancel) {
+                        if (expFY === state.selectedYear && tx.isRetentionBase) agentLB[agent].basePolicies.push({...row});
+                        if (rowFY === state.selectedYear && tx.isRenewal) agentLB[agent].renewals.push({...row});
                     }
                 }
             });
@@ -1225,18 +1374,34 @@
                     d.isFuture = (calYear > currentYear) || (calYear === currentYear && calMonth > currentMonth);
                 });
 
-                let renUsage = renPool.map(r => ({ sig: (toTitleCase(r[COL_INSURED]) + "|" + toTitleCase(r[COL_PRODUCT])).toLowerCase(), used: false }));
+                let renUsage = renPool.map(r => {
+                    const ins = toTitleCase(getColValue(r, COL_INSURED_KEYS));
+                    const prd = toTitleCase(getColValue(r, COL_PRODUCT_KEYS));
+                    return { 
+                        policyNo: (getColValue(r, COL_POLICY_KEYS) || '').toString().trim().toLowerCase(),
+                        prevPolicyNo: (getColValue(r, COL_PREV_POLICY_KEYS) || '').toString().trim().toLowerCase(),
+                        altPolicyNo: (getColValue(r, COL_ALT_POLICY_KEYS) || '').toString().trim().toLowerCase(),
+                        sig: (ins && prd) ? (ins + "|" + prd).toLowerCase() : "",
+                        used: false 
+                    };
+                });
                 
                 basePool.forEach(b => {
                     const mIdx = b.fyMonthIndex;
-                    const sig = (toTitleCase(b[COL_INSURED]) + "|" + toTitleCase(b[COL_PRODUCT])).toLowerCase();
+                    const basePolicyNo = (getColValue(b, COL_POLICY_KEYS) || '').toString().trim().toLowerCase();
+                    const ins = toTitleCase(getColValue(b, COL_INSURED_KEYS));
+                    const prd = toTitleCase(getColValue(b, COL_PRODUCT_KEYS));
+                    const b_sig = (ins && prd) ? (ins + "|" + prd).toLowerCase() : "";
                     
                     fyData[mIdx].baseNOP += 1;
                     totalBaseNOP += 1;
                     
-                    let matchIdx = renUsage.findIndex(r => !r.used && r.sig === sig);
+                    let matchIdx = renUsage.findIndex(r => !r.used && (
+                        (basePolicyNo && (r.prevPolicyNo === basePolicyNo || r.altPolicyNo === basePolicyNo || r.policyNo === basePolicyNo)) ||
+                        (b_sig && r.sig === b_sig)
+                    ));
+
                     let isRenewed = false;
-                    
                     if (matchIdx !== -1) {
                         renUsage[matchIdx].used = true;
                         isRenewed = true;
@@ -1254,21 +1419,57 @@
                 retentionYr1Ren = totalRenewed;
 
                 retentionYr2Base = yr2BasePool.length;
-                let yr2Usage = yr2RenPool.map(r => ({ sig: (toTitleCase(r[COL_INSURED]) + "|" + toTitleCase(r[COL_PRODUCT])).toLowerCase(), used: false }));
+                let yr2Usage = yr2RenPool.map(r => {
+                    const ins = toTitleCase(getColValue(r, COL_INSURED_KEYS));
+                    const prd = toTitleCase(getColValue(r, COL_PRODUCT_KEYS));
+                    return { 
+                        policyNo: (getColValue(r, COL_POLICY_KEYS) || '').toString().trim().toLowerCase(),
+                        prevPolicyNo: (getColValue(r, COL_PREV_POLICY_KEYS) || '').toString().trim().toLowerCase(),
+                        altPolicyNo: (getColValue(r, COL_ALT_POLICY_KEYS) || '').toString().trim().toLowerCase(),
+                        sig: (ins && prd) ? (ins + "|" + prd).toLowerCase() : "",
+                        used: false 
+                    };
+                });
+
                 yr2BasePool.forEach(b => {
-                    const sig = (toTitleCase(b[COL_INSURED]) + "|" + toTitleCase(b[COL_PRODUCT])).toLowerCase();
-                    let matchIdx = yr2Usage.findIndex(r => !r.used && r.sig === sig);
+                    const basePolicyNo = (getColValue(b, COL_POLICY_KEYS) || '').toString().trim().toLowerCase();
+                    const ins = toTitleCase(getColValue(b, COL_INSURED_KEYS));
+                    const prd = toTitleCase(getColValue(b, COL_PRODUCT_KEYS));
+                    const b_sig = (ins && prd) ? (ins + "|" + prd).toLowerCase() : "";
+
+                    let matchIdx = yr2Usage.findIndex(r => !r.used && (
+                        (basePolicyNo && (r.prevPolicyNo === basePolicyNo || r.altPolicyNo === basePolicyNo || r.policyNo === basePolicyNo)) ||
+                        (b_sig && r.sig === b_sig)
+                    ));
                     if (matchIdx !== -1) { yr2Usage[matchIdx].used = true; retentionYr2Ren += 1; }
                 });
 
                 if (state.sub === 'cluster' || state.sub === 'manager') {
                     Object.keys(agentLB).forEach(agent => {
                         let ag = agentLB[agent];
-                        let agRenUsage = ag.renewals.map(r => ({ sig: (toTitleCase(r[COL_INSURED]) + "|" + toTitleCase(r[COL_PRODUCT])).toLowerCase(), used: false }));
+                        let agRenUsage = ag.renewals.map(r => {
+                            const ins = toTitleCase(getColValue(r, COL_INSURED_KEYS));
+                            const prd = toTitleCase(getColValue(r, COL_PRODUCT_KEYS));
+                            return { 
+                                policyNo: (getColValue(r, COL_POLICY_KEYS) || '').toString().trim().toLowerCase(),
+                                prevPolicyNo: (getColValue(r, COL_PREV_POLICY_KEYS) || '').toString().trim().toLowerCase(),
+                                altPolicyNo: (getColValue(r, COL_ALT_POLICY_KEYS) || '').toString().trim().toLowerCase(),
+                                sig: (ins && prd) ? (ins + "|" + prd).toLowerCase() : "", 
+                                used: false 
+                            };
+                        });
+
                         ag.basePolicies.forEach(b => {
                             ag.ytdBase += 1;
-                            const sig = (toTitleCase(b[COL_INSURED]) + "|" + toTitleCase(b[COL_PRODUCT])).toLowerCase();
-                            let matchIdx = agRenUsage.findIndex(r => !r.used && r.sig === sig);
+                            const basePolicyNo = (getColValue(b, COL_POLICY_KEYS) || '').toString().trim().toLowerCase();
+                            const ins = toTitleCase(getColValue(b, COL_INSURED_KEYS));
+                            const prd = toTitleCase(getColValue(b, COL_PRODUCT_KEYS));
+                            const b_sig = (ins && prd) ? (ins + "|" + prd).toLowerCase() : "";
+                            
+                            let matchIdx = agRenUsage.findIndex(r => !r.used && (
+                                (basePolicyNo && (r.prevPolicyNo === basePolicyNo || r.altPolicyNo === basePolicyNo || r.policyNo === basePolicyNo)) ||
+                                (b_sig && r.sig === b_sig)
+                            ));
                             if (matchIdx !== -1) {
                                 agRenUsage[matchIdx].used = true;
                                 ag.ytdRen += 1;
@@ -1300,7 +1501,6 @@
             if (state.sub === 'cluster' || state.sub === 'manager') {
                 leaderboardWrapper.classList.remove('hidden');
                 
-                // Populate the MTD switcher dropdown
                 const lbSelect = document.getElementById('leaderboard-month-select');
                 const prevMVal = lbSelect.value;
                 lbSelect.innerHTML = FY_MONTHS.map((m, i) => `<option value="${i}">${m}</option>`).join('');
@@ -1373,14 +1573,14 @@
             } else { breakdownSection.classList.add('hidden'); breakdownSection.classList.remove('grid'); }
         }
 
-        function renderSummary(tFreshAmt, tFreshNOP, pFreshAmt, pFreshNOP, tBase, tRenewed, tMissed, tYet, pBase, pRenewed) {
+        function renderSummary(tFreshAmt, tFreshNOP, pFreshAmt, pFreshNOP, tBase, tRenewed, tMissed, tYet) {
             const summaryDiv = document.getElementById('summary-section');
             if (state.main === 'fresh') {
                 summaryDiv.innerHTML = `
                     <div class="bg-slate-900 rounded-2xl p-5 shadow-lg text-white col-span-1 md:col-span-2 relative overflow-hidden">
                         <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-500 rounded-full blur-2xl opacity-20"></div>
                         <div class="flex items-center mb-1 relative z-10">
-                            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Net Fresh Premium (GWP)</span>
+                            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Fresh & Rollover Premium (GWP)</span>
                             ${getYoYBadge(tFreshAmt, pFreshAmt)}
                         </div>
                         <div class="text-3xl font-black relative tracking-tight z-10">₹${tFreshAmt.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
