@@ -87,7 +87,7 @@
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
                 </div>
                 <h2 class="text-lg font-bold text-slate-800">Fresh Business</h2>
-                <p class="text-slate-400 text-xs mt-1">Fresh & Rollover GWP, NOP & Activations</p>
+                <p class="text-slate-400 text-xs mt-1">Fresh, Rollover & Endorsements</p>
             </button>
             <button onclick="navToRole('renewal')" class="bg-white p-7 rounded-3xl shadow-sm hover:shadow-xl transition-all transform hover:-translate-y-1.5 border border-slate-200 group flex flex-col items-center text-center">
                 <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
@@ -322,7 +322,7 @@
                         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 col-span-2 md:col-span-3 lg:col-span-6 flex items-center justify-between">
                             <div>
                                 <h2 class="text-sm font-bold text-slate-800">Agent Monthly Activation Distribution (YTD Summary)</h2>
-                                <p class="text-[11px] text-slate-400 font-medium mt-0.5">Fresh & Rollover GWP &ge; &#8377;15,000 / month per agent</p>
+                                <p class="text-[11px] text-slate-400 font-medium mt-0.5">Net Fresh GWP &ge; &#8377;15,000 / month per agent</p>
                             </div>
                             <div class="text-xs font-extrabold bg-blue-50 text-blue-600 px-4 py-2 rounded-xl border border-blue-100 shadow-inner" id="act-total">Total Activations: 0</div>
                         </div>
@@ -352,19 +352,39 @@
                         </div>
                     </div>
 
+                    <!-- KEY AGENT CONTRIBUTION (Manager / Cluster) -->
+                    <div id="key-agent-section" class="hidden pt-2">
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
+                                <div>
+                                    <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                                        Key Agent Sourcing
+                                        <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-bold border border-slate-200">IMF, Broker, Corporate, Pvt Ltd</span>
+                                    </h2>
+                                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">Month-on-Month % contribution of Key Agents to Net Fresh GWP</p>
+                                </div>
+                                <div id="key-agent-wrapper" class="px-4 py-2 rounded-xl border flex flex-col text-right transition-colors">
+                                    <span id="key-agent-label" class="text-[9px] font-bold uppercase tracking-wider">YTD Key Agent GWP</span>
+                                    <span class="text-sm font-black" id="key-agent-overall">0%</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3" id="key-agent-mom"></div>
+                        </div>
+                    </div>
+
                     <!-- FRESH BREAKDOWNS -->
                     <div id="fresh-breakdowns" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
                             <h2 class="text-xs font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center justify-between uppercase tracking-wider">
                                 Product Wise Performance
-                                <span class="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold border border-blue-100">Fresh & Rollover</span>
+                                <span class="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold border border-blue-100">Fresh (Net)</span>
                             </h2>
                             <div id="product-list" class="space-y-3"></div>
                         </div>
                         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
                             <h2 class="text-xs font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center justify-between uppercase tracking-wider">
                                 Sum Insured Wise
-                                <span class="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold border border-blue-100">Fresh & Rollover</span>
+                                <span class="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold border border-blue-100">Fresh (Net)</span>
                             </h2>
                             <div id="si-list" class="space-y-3"></div>
                         </div>
@@ -413,7 +433,7 @@
         const COL_MANAGER_KEYS = ["ssm name", "manager name"];
         const COL_IMD_CODE_KEYS = ["intermediary code", "imd code"];
         const COL_AGR_CODE_KEYS = ["agreement code"];
-        const COL_DATE_KEYS = ["policy start date", "start date"];
+        const COL_DATE_KEYS = ["policy start date", "start date", "transaction date"];
         const COL_END_DATE_KEYS = ["policy end date", "end date"];
         const COL_PREM_KEYS = ["gwp", "premium"];
         const COL_TRANSACTION_KEYS = ["transaction type", "type"];
@@ -439,22 +459,56 @@
             return "";
         }
 
-        // ROLLOVER IS CLASSIFIED AS FRESH BUSINESS
+        function isKeyAgent(name) {
+            if (!name) return false;
+            const n = name.toString().toLowerCase();
+            return n.includes('imf') || 
+                   n.includes('broker') || 
+                   n.includes('pvt') || 
+                   n.includes('private') || 
+                   n.includes('corporate') || 
+                   n.includes('ltd');
+        }
+
+        // Color and Icon Logic Helper for Key Agent Traffic Lights
+        function getKeyAgentStyles(pct) {
+            if (pct < 15) {
+                return {
+                    bg: 'bg-emerald-50 border-emerald-200',
+                    text: 'text-emerald-700',
+                    subText: 'text-emerald-500',
+                    bar: 'bg-emerald-500',
+                    icon: `<svg class="w-3.5 h-3.5 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`
+                };
+            } else if (pct < 25) {
+                return {
+                    bg: 'bg-amber-50 border-amber-200',
+                    text: 'text-amber-700',
+                    subText: 'text-amber-500',
+                    bar: 'bg-amber-400',
+                    icon: `<svg class="w-3.5 h-3.5 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`
+                };
+            } else {
+                return {
+                    bg: 'bg-rose-50 border-rose-200',
+                    text: 'text-rose-700',
+                    subText: 'text-rose-500',
+                    bar: 'bg-rose-500',
+                    icon: `<svg class="w-3.5 h-3.5 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`
+                };
+            }
+        }
+
         function parseTransactionType(typeStr) {
             const tType = (typeStr || '').toString().toLowerCase().trim();
-            const isEndorsement = tType.includes('endorsement');
-            const isCancel = tType.includes('cancel');
-            
-            if (isEndorsement) return { isCancel: false, isRenewal: false, isFresh: false, isRetentionBase: false };
-
-            // Exclude "roll" from renewals entirely
+            const isCancel = tType.includes('cancel') || tType.includes('reversal') || tType.includes('dishonor') || tType.includes('dishonour');
+            const isRefund = tType.includes('refund');
             const isRenewal = (tType.includes('renewal') || tType.includes('rnw')) && !tType.includes('roll');
-            
-            // Treat "roll" (rollover) as fresh business
-            const isFresh = (tType.includes('fresh') || tType.includes('new') || tType === 'nb' || tType.includes('roll')) && !isRenewal && !isCancel;
-            
+            const isFresh = (tType.includes('fresh') || tType.includes('new') || tType === 'nb' || tType.includes('roll')) && !isRenewal && !isCancel && !isRefund;
+            const isEndorsement = tType.includes('endorsement') && !isRenewal && !isCancel && !isRefund && !isFresh;
             const isRetentionBase = isFresh || isRenewal;
-            return { isCancel, isRenewal, isFresh, isRetentionBase };
+            
+            return { isCancel, isRenewal, isFresh, isRetentionBase, isRefund, isEndorsement, raw: tType };
         }
 
         function parseNumber(val) {
@@ -465,12 +519,9 @@
             return isNaN(num) ? 0 : num;
         }
 
-        // TIMEZONE-FREE DATE PARSER
         function parseExcelDate(val) {
             if (val === undefined || val === null || val === '') return null;
-            
             let y, m, d;
-
             if (typeof val === 'number') {
                 let tempDate = new Date(Math.round((val - 25569) * 86400000));
                 y = tempDate.getUTCFullYear();
@@ -483,15 +534,12 @@
                 d = val.getDate();
             } else {
                 let s = val.toString().trim().split(/[\sT]+/)[0];
-                
-                // ISO YYYY-MM-DD
                 let match = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);
                 if (match) {
                     y = parseInt(match[1], 10);
                     m = parseInt(match[2], 10);
                     d = parseInt(match[3], 10);
                 } else {
-                    // Prioritize DD/MM/YYYY text formatting
                     match = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/);
                     if (match) {
                         d = parseInt(match[1], 10);
@@ -500,7 +548,6 @@
                         if (y < 100) y += 2000;
                         if (m > 12) { let temp = m; m = d; d = temp; }
                     } else {
-                        // 1-Sep-2026
                         const monthMap = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 };
                         match = s.match(/^(\d{1,2})[-\/.\s]+([a-zA-Z]{3,})[-\/.\s]+(\d{2,4})/);
                         if (match) {
@@ -520,10 +567,7 @@
                     }
                 }
             }
-
-            if (y && m && d) {
-                return new Date(y, m - 1, d, 12, 0, 0);
-            }
+            if (y && m && d) return new Date(y, m - 1, d, 12, 0, 0);
             return null;
         }
 
@@ -538,7 +582,6 @@
                 const file = e.target.files[0];
                 if (file) loadExcel(file);
             });
-
             window.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') closeModal();
             });
@@ -568,7 +611,6 @@
                 rawData = [];
                 workbook.SheetNames.forEach(sheetName => {
                     const sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
-                    
                     if (sheet.length > 0) {
                         const cleanedSheet = sheet.map(row => {
                             let cleanRow = {};
@@ -580,7 +622,6 @@
                         rawData = rawData.concat(cleanedSheet);
                     }
                 });
-
                 document.getElementById('upload-overlay').classList.add('hidden');
                 showView('view-home');
             } catch (err) { alert("Error parsing Excel file. Please ensure a valid format."); }
@@ -665,7 +706,6 @@
             }).filter(y => y !== null))].sort((a, b) => b - a);
 
             yearSelect.innerHTML = '<option value="">Select Financial Year</option>' + years.map(y => `<option value="${y}">FY ${y}-${y+1}</option>`).join('');
-            
             document.getElementById('name-select').innerHTML = '<option value="">Choose...</option>';
             document.getElementById('month-select').innerHTML = '<option value="">Select Month</option>';
         }
@@ -693,14 +733,12 @@
                 } else {
                     const nameSelect = document.getElementById('name-select');
                     const colKeys = state.sub === 'agent' ? COL_AGENT_KEYS : COL_MANAGER_KEYS;
-                    
                     const filtered = rawData.filter(row => {
                         const d = parseExcelDate(getColValue(row, COL_DATE_KEYS));
                         if (!d) return false;
                         const rowFY = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1;
                         return rowFY === state.selectedYear;
                     });
-
                     const names = [...new Set(filtered.map(row => toTitleCase(getColValue(row, colKeys))).filter(n => n))].sort();
                     nameSelect.innerHTML = '<option value="">Choose ' + (state.sub === 'agent' ? 'Agent' : 'Manager') + '</option>' + names.map(n => `<option value="${n}">${n}</option>`).join('');
                     resetDashboard();
@@ -710,21 +748,13 @@
 
         function onNameChange() {
             state.selectedName = document.getElementById('name-select').value || null;
-            if (state.selectedName && state.selectedYear) {
-                renderDashboard();
-            } else {
-                resetDashboard();
-            }
+            if (state.selectedName && state.selectedYear) { renderDashboard(); } else { resetDashboard(); }
         }
 
         function onMonthChange() {
             const mVal = document.getElementById('month-select').value;
             state.selectedMonth = mVal !== "" ? parseInt(mVal) : null;
-            if (state.selectedMonth !== null && state.selectedYear) {
-                renderRanking();
-            } else {
-                resetDashboard();
-            }
+            if (state.selectedMonth !== null && state.selectedYear) { renderRanking(); } else { resetDashboard(); }
         }
 
         function formatSumInsured(val) {
@@ -752,7 +782,7 @@
             const tbody = document.getElementById('modal-table-body');
             
             if (state.main === 'fresh') {
-                document.getElementById('modal-subtitle').innerText = "Policy-Level Details (Fresh & Rollover Business)";
+                document.getElementById('modal-subtitle').innerText = "Policy-Level Details (Net Fresh & Rollover Business)";
                 
                 thead.innerHTML = `
                     <tr>
@@ -768,7 +798,6 @@
                 let policies = rawData.filter(row => {
                     const date = parseExcelDate(getColValue(row, COL_DATE_KEYS));
                     if(!date) return false;
-                    
                     const month = date.getMonth();
                     const year = date.getFullYear();
                     const rowFY = month >= 3 ? year : year - 1;
@@ -780,7 +809,7 @@
                     if (state.sub === 'manager' && toTitleCase(getColValue(row, COL_MANAGER_KEYS)) !== state.selectedName) return false;
 
                     const tx = parseTransactionType(getColValue(row, COL_TRANSACTION_KEYS));
-                    return tx.isFresh || tx.isCancel;
+                    return tx.isFresh || tx.isCancel || tx.isRefund || tx.isEndorsement;
                 });
 
                 policies.sort((a, b) => (parseExcelDate(getColValue(a, COL_DATE_KEYS)) || new Date(0)) - (parseExcelDate(getColValue(b, COL_DATE_KEYS)) || new Date(0)));
@@ -794,19 +823,22 @@
                         const prem = parseNumber(getColValue(p, COL_PREM_KEYS));
                         const siStr = formatSumInsured(getColValue(p, COL_SUM_INSURED_KEYS));
                         const tx = parseTransactionType(getColValue(p, COL_TRANSACTION_KEYS));
+                        const isRed = tx.isCancel || tx.isRefund || prem < 0;
 
                         return `
-                        <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
-                            <td class="p-3 text-[11px] font-medium text-slate-600 whitespace-nowrap">${dateStr}</td>
-                            <td class="p-3 text-[11px] font-bold text-slate-800 whitespace-nowrap">${getColValue(p, COL_POLICY_KEYS) || 'N/A'}</td>
-                            <td class="p-3 text-[11px] font-bold text-blue-600 truncate max-w-[140px]">${toTitleCase(getColValue(p, COL_AGENT_KEYS)) || 'N/A'}</td>
-                            <td class="p-3 text-[11px] font-medium text-slate-600 truncate max-w-[140px]">${toTitleCase(getColValue(p, COL_INSURED_KEYS)) || 'Unknown'}</td>
-                            <td class="p-3 text-[11px] font-medium text-slate-500 truncate max-w-[120px]">${getColValue(p, COL_PRODUCT_KEYS) || '-'}</td>
-                            <td class="p-3 text-[11px] font-bold text-slate-700 whitespace-nowrap">${siStr}</td>
+                        <tr class="${isRed ? 'bg-rose-50/80 hover:bg-rose-100 border-b border-rose-100' : 'hover:bg-slate-50 border-b border-slate-50'} transition-colors last:border-0">
+                            <td class="p-3 text-[11px] font-medium ${isRed ? 'text-rose-600' : 'text-slate-600'} whitespace-nowrap">${dateStr}</td>
+                            <td class="p-3 text-[11px] font-bold ${isRed ? 'text-rose-700' : 'text-slate-800'} whitespace-nowrap">${getColValue(p, COL_POLICY_KEYS) || 'N/A'}</td>
+                            <td class="p-3 text-[11px] font-bold ${isRed ? 'text-rose-600' : 'text-blue-600'} truncate max-w-[140px]">${toTitleCase(getColValue(p, COL_AGENT_KEYS)) || 'N/A'}</td>
+                            <td class="p-3 text-[11px] font-medium ${isRed ? 'text-rose-600' : 'text-slate-600'} truncate max-w-[140px]">${toTitleCase(getColValue(p, COL_INSURED_KEYS)) || 'Unknown'}</td>
+                            <td class="p-3 text-[11px] font-medium ${isRed ? 'text-rose-500' : 'text-slate-500'} truncate max-w-[120px]">${getColValue(p, COL_PRODUCT_KEYS) || '-'}</td>
+                            <td class="p-3 text-[11px] font-bold ${isRed ? 'text-rose-700' : 'text-slate-700'} whitespace-nowrap">${siStr}</td>
                             <td class="p-3 text-right whitespace-nowrap">
                                 <div class="flex flex-col items-end gap-1">
-                                    <span class="text-[11px] font-bold ${tx.isCancel ? 'text-rose-500' : 'text-slate-800'}">₹${Math.abs(prem).toLocaleString('en-IN', {maximumFractionDigits:0})}</span>
-                                    ${tx.isCancel ? `<span class="bg-rose-100 text-rose-700 px-2 py-0.5 rounded text-[9px] font-bold">Cancelled</span>` : ''}
+                                    <span class="text-[11px] font-bold ${isRed ? 'text-rose-700' : 'text-slate-800'}">₹${Math.abs(prem).toLocaleString('en-IN', {maximumFractionDigits:0})}</span>
+                                    ${tx.isCancel ? `<span class="bg-rose-200 text-rose-800 px-2 py-0.5 rounded text-[9px] font-bold">Cancelled</span>` : ''}
+                                    ${tx.isRefund ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[9px] font-bold">Refunded</span>` : ''}
+                                    ${tx.isEndorsement && prem > 0 ? `<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[9px] font-bold">Endorsement</span>` : ''}
                                 </div>
                             </td>
                         </tr>`;
@@ -814,7 +846,6 @@
                 }
             } else {
                 document.getElementById('modal-subtitle').innerText = "Base Policies Due for Renewal";
-
                 thead.innerHTML = `
                     <tr>
                         <th class="p-3 text-[10px] font-bold text-slate-500 uppercase">Start Date</th>
@@ -826,27 +857,20 @@
                         <th class="p-3 text-[10px] font-bold text-slate-500 uppercase text-right">Status</th>
                     </tr>`;
 
-                let baseDue = [];
-                let currentYearRenewals = [];
-                
+                let baseDue = []; let currentYearRenewals = [];
                 rawData.forEach(row => {
                     const date = parseExcelDate(getColValue(row, COL_DATE_KEYS));
                     const endDate = parseExcelDate(getColValue(row, COL_END_DATE_KEYS));
                     if(!date) return;
-
                     const rowFY = date.getMonth() >= 3 ? date.getFullYear() : date.getFullYear() - 1;
                     
                     let expFY, expFyMonthIndex;
                     if (endDate) {
-                        const expMonth = endDate.getMonth();
-                        const expYear = endDate.getFullYear();
-                        expFY = expMonth >= 3 ? expYear : expYear - 1;
-                        expFyMonthIndex = expMonth >= 3 ? expMonth - 3 : expMonth + 9;
+                        const expMonth = endDate.getMonth(); const expYear = endDate.getFullYear();
+                        expFY = expMonth >= 3 ? expYear : expYear - 1; expFyMonthIndex = expMonth >= 3 ? expMonth - 3 : expMonth + 9;
                     } else {
-                        const expMonth = date.getMonth();
-                        const expYear = date.getFullYear() + 1;
-                        expFY = expMonth >= 3 ? expYear : expYear - 1;
-                        expFyMonthIndex = expMonth >= 3 ? expMonth - 3 : expMonth + 9;
+                        const expMonth = date.getMonth(); const expYear = date.getFullYear() + 1;
+                        expFY = expMonth >= 3 ? expYear : expYear - 1; expFyMonthIndex = expMonth >= 3 ? expMonth - 3 : expMonth + 9;
                     }
                     
                     const agent = toTitleCase(getColValue(row, COL_AGENT_KEYS) || '');
@@ -856,7 +880,6 @@
                     if (state.sub === 'manager' && manager !== state.selectedName) return;
 
                     const tx = parseTransactionType(getColValue(row, COL_TRANSACTION_KEYS));
-
                     if (expFY === state.selectedYear && tx.isRetentionBase && !tx.isCancel && expFyMonthIndex === monthIndex) baseDue.push(row);
                     if (rowFY === state.selectedYear && tx.isRenewal) currentYearRenewals.push(row);
                 });
@@ -875,20 +898,11 @@
                 
                 let mappedPolicies = baseDue.map(p => {
                     const basePolicyNo = (getColValue(p, COL_POLICY_KEYS) || '').toString().trim().toLowerCase();
-                    const ins = toTitleCase(getColValue(p, COL_INSURED_KEYS));
-                    const prd = toTitleCase(getColValue(p, COL_PRODUCT_KEYS));
+                    const ins = toTitleCase(getColValue(p, COL_INSURED_KEYS)); const prd = toTitleCase(getColValue(p, COL_PRODUCT_KEYS));
                     const sig = (ins && prd) ? (ins + "|" + prd).toLowerCase() : "";
 
-                    let matchIdx = renPool.findIndex(r => !r.used && (
-                        (basePolicyNo && (r.prevPolicyNo === basePolicyNo || r.altPolicyNo === basePolicyNo || r.policyNo === basePolicyNo)) ||
-                        (sig && r.sig === sig)
-                    ));
-                    
-                    let isRenewed = false;
-                    if (matchIdx !== -1) {
-                        renPool[matchIdx].used = true;
-                        isRenewed = true;
-                    }
+                    let matchIdx = renPool.findIndex(r => !r.used && ((basePolicyNo && (r.prevPolicyNo === basePolicyNo || r.altPolicyNo === basePolicyNo || r.policyNo === basePolicyNo)) || (sig && r.sig === sig)));
+                    let isRenewed = false; if (matchIdx !== -1) { renPool[matchIdx].used = true; isRenewed = true; }
                     return { ...p, _isRenewed: isRenewed };
                 });
 
@@ -902,10 +916,7 @@
                         const dateStr = d ? `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}` : '-';
                         const prem = parseNumber(getColValue(p, COL_PREM_KEYS));
                         const siStr = formatSumInsured(getColValue(p, COL_SUM_INSURED_KEYS));
-                        
-                        const statusBadge = p._isRenewed 
-                            ? `<span class="bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">Renewed</span>` 
-                            : `<span class="bg-rose-100 text-rose-700 px-2.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">Not Renewed</span>`;
+                        const statusBadge = p._isRenewed ? `<span class="bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">Renewed</span>` : `<span class="bg-rose-100 text-rose-700 px-2.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">Not Renewed</span>`;
 
                         return `
                         <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
@@ -916,10 +927,7 @@
                             <td class="p-3 text-[11px] font-medium text-slate-500 truncate max-w-[120px]">${getColValue(p, COL_PRODUCT_KEYS) || '-'}</td>
                             <td class="p-3 text-[11px] font-bold text-slate-700 whitespace-nowrap">${siStr}</td>
                             <td class="p-3 text-right whitespace-nowrap">
-                                <div class="flex flex-col items-end gap-1">
-                                    <span class="text-[11px] font-bold text-slate-800">₹${Math.abs(prem).toLocaleString('en-IN', {maximumFractionDigits:0})}</span>
-                                    ${statusBadge}
-                                </div>
+                                <div class="flex flex-col items-end gap-1"><span class="text-[11px] font-bold text-slate-800">₹${Math.abs(prem).toLocaleString('en-IN', {maximumFractionDigits:0})}</span>${statusBadge}</div>
                             </td>
                         </tr>`;
                     }).join('');
@@ -932,83 +940,62 @@
             const monthName = FY_MONTHS[monthIndex];
             document.getElementById('modal-title').innerText = `${monthName} FY${state.selectedYear}-${state.selectedYear+1} - Agent Activations`;
             document.getElementById('modal-subtitle').innerText = specificSlab ? `Showing Agents in Slab: ${specificSlab}` : "Monthly Active Agents Summary";
-            
             const thead = document.getElementById('modal-table-head');
             const tbody = document.getElementById('modal-table-body');
-
             thead.innerHTML = `
                 <tr>
                     <th class="p-3 text-[10px] font-bold text-slate-500 uppercase">Rank</th>
                     <th class="p-3 text-[10px] font-bold text-slate-500 uppercase">Agent Name</th>
                     <th class="p-3 text-[10px] font-bold text-slate-500 uppercase">Manager</th>
                     <th class="p-3 text-[10px] font-bold text-slate-500 uppercase">Activation Slab</th>
-                    <th class="p-3 text-[10px] font-bold text-slate-500 uppercase text-center">Fresh NOP</th>
-                    <th class="p-3 text-[10px] font-bold text-slate-500 uppercase text-right">Fresh GWP</th>
+                    <th class="p-3 text-[10px] font-bold text-slate-500 uppercase text-center">Net NOP</th>
+                    <th class="p-3 text-[10px] font-bold text-slate-500 uppercase text-right">Net GWP</th>
                 </tr>`;
 
             let agentMap = {};
-
             rawData.forEach(row => {
                 const date = parseExcelDate(getColValue(row, COL_DATE_KEYS));
                 if(!date) return;
-                
-                const month = date.getMonth();
-                const year = date.getFullYear();
+                const month = date.getMonth(); const year = date.getFullYear();
                 const rowFY = month >= 3 ? year : year - 1;
                 const rowFyMonthIndex = month >= 3 ? month - 3 : month + 9;
-
                 if (rowFyMonthIndex !== monthIndex || rowFY !== state.selectedYear) return;
                 
                 const agent = toTitleCase(getColValue(row, COL_AGENT_KEYS) || '');
                 const manager = toTitleCase(getColValue(row, COL_MANAGER_KEYS) || '');
-                
                 if (state.sub === 'agent' && agent !== state.selectedName) return;
                 if (state.sub === 'manager' && manager !== state.selectedName) return;
 
                 const tx = parseTransactionType(getColValue(row, COL_TRANSACTION_KEYS));
-                
-                if (tx.isFresh && agent) {
+                if ((tx.isFresh || tx.isCancel || tx.isRefund || tx.isEndorsement) && agent) {
                     if (!agentMap[agent]) agentMap[agent] = { gwp: 0, nop: 0, manager: manager };
-                    agentMap[agent].gwp += parseNumber(getColValue(row, COL_PREM_KEYS));
-                    agentMap[agent].nop += 1;
+                    const prem = parseNumber(getColValue(row, COL_PREM_KEYS));
+                    if (tx.isFresh) { agentMap[agent].gwp += prem; agentMap[agent].nop += 1; }
+                    else if (tx.isCancel) { agentMap[agent].gwp += (prem > 0 ? -Math.abs(prem) : prem); agentMap[agent].nop -= 1; }
+                    else if (tx.isRefund) { agentMap[agent].gwp += (prem > 0 ? -Math.abs(prem) : prem); }
+                    else if (tx.isEndorsement) { agentMap[agent].gwp += prem; }
                 }
             });
 
             let list = Object.keys(agentMap).map(agent => {
                 const gwp = agentMap[agent].gwp;
                 let slab = "Below 15K", slabCode = "below15k", isActivated = false;
-                
                 if (gwp >= 300000) { slab = ">= 3 Lac"; slabCode = "3L+"; isActivated = true; }
                 else if (gwp >= 200000) { slab = "2 Lac - < 3 Lac"; slabCode = "2L"; isActivated = true; }
                 else if (gwp >= 100000) { slab = "1 Lac - < 2 Lac"; slabCode = "1L"; isActivated = true; }
                 else if (gwp >= 50000) { slab = "50K - < 1 Lac"; slabCode = "50K"; isActivated = true; }
                 else if (gwp >= 15000) { slab = "15K - < 50K"; slabCode = "15K"; isActivated = true; }
-
-                return {
-                    agent,
-                    manager: agentMap[agent].manager,
-                    gwp,
-                    nop: agentMap[agent].nop,
-                    slab,
-                    slabCode,
-                    isActivated
-                };
+                return { agent, manager: agentMap[agent].manager, gwp, nop: agentMap[agent].nop, slab, slabCode, isActivated };
             });
 
-            if (specificSlab) {
-                list = list.filter(item => item.slabCode === specificSlab);
-            }
-
+            if (specificSlab) list = list.filter(item => item.slabCode === specificSlab);
             list.sort((a, b) => b.gwp - a.gwp);
 
             if (list.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" class="p-5 text-center text-xs text-slate-500 font-medium">No agents found for this criteria.</td></tr>`;
             } else {
                 tbody.innerHTML = list.map((item, i) => {
-                    const slabBadge = item.isActivated 
-                        ? `<span class="bg-blue-50 border border-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-bold">${item.slab}</span>`
-                        : `<span class="bg-slate-100 text-slate-400 px-2 py-0.5 rounded text-[10px] font-bold">Below 15K (Inactive)</span>`;
-
+                    const slabBadge = item.isActivated ? `<span class="bg-blue-50 border border-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-bold">${item.slab}</span>` : `<span class="bg-slate-100 text-slate-400 px-2 py-0.5 rounded text-[10px] font-bold">Below 15K (Inactive)</span>`;
                     return `
                     <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
                         <td class="p-3 text-[11px] font-extrabold text-slate-400">#${i+1}</td>
@@ -1016,15 +1003,16 @@
                         <td class="p-3 text-[11px] font-medium text-slate-500">${item.manager || 'N/A'}</td>
                         <td class="p-3 text-[11px]">${slabBadge}</td>
                         <td class="p-3 text-[11px] font-bold text-slate-700 text-center">${item.nop}</td>
-                        <td class="p-3 text-[11px] font-black text-blue-600 text-right">₹${item.gwp.toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
+                        <td class="p-3 text-[11px] font-black ${item.gwp < 0 ? 'text-rose-600' : 'text-blue-600'} text-right">₹${item.gwp.toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
                     </tr>`;
                 }).join('');
             }
-
             document.getElementById('drilldown-modal').classList.remove('hidden');
         }
 
-        function closeModal() { document.getElementById('drilldown-modal').classList.add('hidden'); }
+        function closeModal() { 
+            document.getElementById('drilldown-modal').classList.add('hidden'); 
+        }
 
         function renderRanking() {
             document.getElementById('empty-state').classList.add('hidden');
@@ -1034,35 +1022,33 @@
             const calYear = state.selectedMonth < 9 ? state.selectedYear : state.selectedYear + 1;
             const calMonth = (state.selectedMonth + 3) % 12;
 
-            document.getElementById('rb-title').innerText = state.sub === 'gwp_rank' ? 'Top Fresh & Rollover Ranking' : 'Top NOP Ranking';
+            document.getElementById('rb-title').innerText = state.sub === 'gwp_rank' ? 'Top Net Fresh Ranking' : 'Top Net NOP Ranking';
             document.getElementById('rb-subtitle').innerText = `${FY_MONTHS[state.selectedMonth]} FY${state.selectedYear}-${state.selectedYear+1}`;
             document.getElementById('rb-metric-label').innerText = state.sub === 'gwp_rank' ? 'GWP Premium' : 'NOP Count';
 
             let agents = {};
-
             rawData.forEach(row => {
                 const d = parseExcelDate(getColValue(row, COL_DATE_KEYS));
                 if (!d) return;
 
                 if (d.getFullYear() === calYear && d.getMonth() === calMonth) {
                     const tx = parseTransactionType(getColValue(row, COL_TRANSACTION_KEYS));
-                    
-                    if (tx.isFresh || tx.isCancel) {
+                    if (tx.isFresh || tx.isCancel || tx.isRefund || tx.isEndorsement) {
                         const agent = toTitleCase(getColValue(row, COL_AGENT_KEYS));
                         const manager = toTitleCase(getColValue(row, COL_MANAGER_KEYS));
-                        
                         if (agent) {
                             if (!agents[agent]) agents[agent] = { gwp: 0, nop: 0, manager: manager };
                             const prem = parseNumber(getColValue(row, COL_PREM_KEYS));
                             if (tx.isFresh) { agents[agent].nop += 1; agents[agent].gwp += prem; } 
-                            else { agents[agent].nop -= 1; agents[agent].gwp += (prem > 0 ? -Math.abs(prem) : prem); }
+                            else if (tx.isCancel) { agents[agent].nop -= 1; agents[agent].gwp += (prem > 0 ? -Math.abs(prem) : prem); }
+                            else if (tx.isRefund) { agents[agent].gwp += (prem > 0 ? -Math.abs(prem) : prem); }
+                            else if (tx.isEndorsement) { agents[agent].gwp += prem; }
                         }
                     }
                 }
             });
 
-            let sorted = Object.keys(agents).filter(a => agents[a].nop > 0 || agents[a].gwp > 0);
-            
+            let sorted = Object.keys(agents).filter(a => agents[a].nop !== 0 || agents[a].gwp !== 0);
             sorted.sort((a, b) => {
                 if (state.sub === 'gwp_rank') return agents[b].gwp !== agents[a].gwp ? agents[b].gwp - agents[a].gwp : agents[b].nop - agents[a].nop;
                 return agents[b].nop !== agents[a].nop ? agents[b].nop - agents[a].nop : agents[b].gwp - agents[a].gwp;
@@ -1070,21 +1056,17 @@
 
             const listDiv = document.getElementById('rb-list');
             if (sorted.length === 0) {
-                listDiv.innerHTML = `<div class="text-center p-6 text-slate-400 text-sm font-medium">No fresh or rollover business recorded in ${FY_MONTHS[state.selectedMonth]}.</div>`;
+                listDiv.innerHTML = `<div class="text-center p-6 text-slate-400 text-sm font-medium">No net fresh business recorded in ${FY_MONTHS[state.selectedMonth]}.</div>`;
                 return;
             }
 
             listDiv.innerHTML = sorted.map((agent, i) => {
-                let rankClass = "bg-white border-slate-200 text-slate-600";
-                let medal = `#${i+1}`;
+                let rankClass = "bg-white border-slate-200 text-slate-600"; let medal = `#${i+1}`;
                 if (i === 0) { rankClass = "rank-1 text-[20px]"; medal = "🥇"; }
                 else if (i === 1) { rankClass = "rank-2 text-[20px]"; medal = "🥈"; }
                 else if (i === 2) { rankClass = "rank-3 text-[20px]"; medal = "🥉"; }
 
-                const score = state.sub === 'gwp_rank' 
-                    ? `₹${agents[agent].gwp.toLocaleString('en-IN', {maximumFractionDigits:0})}`
-                    : `${agents[agent].nop} NOP`;
-
+                const score = state.sub === 'gwp_rank' ? `₹${agents[agent].gwp.toLocaleString('en-IN', {maximumFractionDigits:0})}` : `${agents[agent].nop} NOP`;
                 return `
                 <div class="flex items-center p-3.5 rounded-2xl shadow-sm border bg-white border-slate-100 mb-2.5">
                     <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-xs ${rankClass} shadow-sm shrink-0">${medal}</div>
@@ -1093,7 +1075,7 @@
                         <div class="text-[10px] font-bold text-slate-400 truncate mt-0.5">Manager: ${agents[agent].manager || 'N/A'}</div>
                     </div>
                     <div class="text-right shrink-0">
-                        <div class="font-black ${state.sub === 'gwp_rank' ? 'text-blue-600' : 'text-amber-500'} text-base tracking-tight">${score}</div>
+                        <div class="font-black ${state.sub === 'gwp_rank' && agents[agent].gwp < 0 ? 'text-rose-600' : (state.sub === 'gwp_rank' ? 'text-blue-600' : 'text-amber-500')} text-base tracking-tight">${score}</div>
                     </div>
                 </div>`;
             }).join('');
@@ -1108,24 +1090,25 @@
             if (state.main === 'fresh') {
                 document.getElementById('lb-mtd-gwp-title').innerText = `Top 3 MTD GWP (${mName})`;
                 document.getElementById('lb-mtd-nop-title').innerText = `Top 3 MTD NOP (${mName})`;
-
                 let monthlyAgents = {};
+
                 rawData.forEach(row => {
                     const date = parseExcelDate(getColValue(row, COL_DATE_KEYS));
                     if (!date) return;
                     if (date.getFullYear() === calYear && date.getMonth() === calMonth) {
                         const tx = parseTransactionType(getColValue(row, COL_TRANSACTION_KEYS));
-
-                        if (tx.isFresh || tx.isCancel) {
+                        if (tx.isFresh || tx.isCancel || tx.isRefund || tx.isEndorsement) {
                             const agent = toTitleCase(getColValue(row, COL_AGENT_KEYS) || '');
                             const manager = toTitleCase(getColValue(row, COL_MANAGER_KEYS) || '');
-
                             const passes = state.sub === 'cluster' || (state.sub === 'manager' && manager === state.selectedName);
+                            
                             if (passes && agent) {
                                 if (!monthlyAgents[agent]) monthlyAgents[agent] = { gwp: 0, nop: 0 };
                                 const prem = parseNumber(getColValue(row, COL_PREM_KEYS));
                                 if (tx.isFresh) { monthlyAgents[agent].gwp += prem; monthlyAgents[agent].nop += 1; }
-                                else if (tx.isCancel) { monthlyAgents[agent].gwp -= Math.abs(prem); monthlyAgents[agent].nop -= 1; }
+                                else if (tx.isCancel) { monthlyAgents[agent].gwp += (prem > 0 ? -Math.abs(prem) : prem); monthlyAgents[agent].nop -= 1; }
+                                else if (tx.isRefund) { monthlyAgents[agent].gwp += (prem > 0 ? -Math.abs(prem) : prem); }
+                                else if (tx.isEndorsement) { monthlyAgents[agent].gwp += prem; }
                             }
                         }
                     }
@@ -1136,7 +1119,6 @@
 
                 document.getElementById('lb-mtd-gwp').innerHTML = tMtdGwp.length ? tMtdGwp.map((a, i) => `<div class="flex justify-between items-center text-[11px] pb-1.5 border-b border-slate-50 last:border-0"><span class="font-medium text-slate-700 truncate"><span class="text-slate-400 mr-1">#${i+1}</span>${a}</span><span class="font-bold text-blue-600">₹${monthlyAgents[a].gwp.toLocaleString('en-IN', {maximumFractionDigits:0})}</span></div>`).join('') : '<p class="text-[10px] text-slate-400">No data</p>';
                 document.getElementById('lb-mtd-nop').innerHTML = tMtdNop.length ? tMtdNop.map((a, i) => `<div class="flex justify-between items-center text-[11px] pb-1.5 border-b border-slate-50 last:border-0"><span class="font-medium text-slate-700 truncate"><span class="text-slate-400 mr-1">#${i+1}</span>${a}</span><span class="font-bold text-amber-500">${monthlyAgents[a].nop}</span></div>`).join('') : '<p class="text-[10px] text-slate-400">No data</p>';
-
             } else {
                 document.getElementById('lb-mtd-ren-title').innerText = `Top 3 MTD Retention (${mName})`;
                 
@@ -1217,7 +1199,6 @@
             }
         }
 
-        // MAIN DASHBOARD RENDER
         function renderDashboard() {
             document.getElementById('empty-state').classList.add('hidden');
             document.getElementById('ranking-board-content').classList.add('hidden');
@@ -1237,41 +1218,34 @@
             }
 
             const fyData = Array.from({ length: 12 }, () => ({
-                freshNOP: 0, freshAmount: 0, baseNOP: 0, renRenewed: 0, renMissed: 0, yetToRenew: 0, isFuture: false, activations: 0,
+                freshNOP: 0, freshAmount: 0, baseNOP: 0, renRenewed: 0, renMissed: 0, yetToRenew: 0, isFuture: false, activations: 0, keyAgentGWP: 0,
                 actDistribution: { below15k: 0, b15k: 0, b50k: 0, b1L: 0, b2L: 0, b3L: 0 }
             }));
 
-            let totalFreshAmt = 0, totalFreshNOP = 0, prevFreshAmt = 0, prevFreshNOP = 0;
+            let totalFreshAmt = 0, totalFreshNOP = 0, prevFreshAmt = 0, prevFreshNOP = 0, totalKeyAgentGWP = 0;
             let productBreakdown = {}, siBreakdown = {}, agentLB = {};
             let agentMonthlyPureGWP = {}; 
 
             let basePool = [], renPool = [], yr2BasePool = [], yr2RenPool = [];
 
-            const now = new Date();
-            const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth(); 
+            const now = new Date(); const currentYear = now.getFullYear(); const currentMonth = now.getMonth(); 
 
             rawData.forEach(row => {
                 const date = parseExcelDate(getColValue(row, COL_DATE_KEYS));
                 const endDate = parseExcelDate(getColValue(row, COL_END_DATE_KEYS));
                 if (!date) return;
 
-                const month = date.getMonth(); 
-                const year = date.getFullYear();
+                const month = date.getMonth(); const year = date.getFullYear();
                 const rowFY = month >= 3 ? year : year - 1;
                 const fyMonthIndex = month >= 3 ? month - 3 : month + 9;
                 
                 let expFY, expFyMonthIndex;
                 if (endDate) {
-                    const expMonth = endDate.getMonth();
-                    const expYear = endDate.getFullYear();
-                    expFY = expMonth >= 3 ? expYear : expYear - 1;
-                    expFyMonthIndex = expMonth >= 3 ? expMonth - 3 : expMonth + 9;
+                    const expMonth = endDate.getMonth(); const expYear = endDate.getFullYear();
+                    expFY = expMonth >= 3 ? expYear : expYear - 1; expFyMonthIndex = expMonth >= 3 ? expMonth - 3 : expMonth + 9;
                 } else {
-                    const expMonth = date.getMonth();
-                    const expYear = date.getFullYear() + 1;
-                    expFY = expMonth >= 3 ? expYear : expYear - 1;
-                    expFyMonthIndex = expMonth >= 3 ? expMonth - 3 : expMonth + 9;
+                    const expMonth = date.getMonth(); const expYear = date.getFullYear() + 1;
+                    expFY = expMonth >= 3 ? expYear : expYear - 1; expFyMonthIndex = expMonth >= 3 ? expMonth - 3 : expMonth + 9;
                 }
                 
                 const premium = parseNumber(getColValue(row, COL_PREM_KEYS));
@@ -1284,52 +1258,60 @@
                     if(!agentLB[agent]) agentLB[agent] = { ytdGWP:0, ytdNOP:0, ytdBase:0, ytdRen:0, basePolicies: [], renewals: [] };
                 }
 
-                const passesFilter = (state.sub === 'cluster' || 
-                                     (state.sub === 'agent' && agent === state.selectedName) || 
-                                     (state.sub === 'manager' && manager === state.selectedName));
-
+                const passesFilter = (state.sub === 'cluster' || (state.sub === 'agent' && agent === state.selectedName) || (state.sub === 'manager' && manager === state.selectedName));
                 const passesLBFilter = state.sub === 'cluster' || (state.sub === 'manager' && manager === state.selectedName);
 
                 if (state.main === 'fresh') {
                     if (rowFY === state.selectedYear) {
                         let finalPrem = 0, finalNop = 0;
+                        
                         if (tx.isFresh) { finalNop = 1; finalPrem = premium; } 
                         else if (tx.isCancel) { finalNop = -1; finalPrem = premium > 0 ? -Math.abs(premium) : premium; }
+                        else if (tx.isRefund) { finalNop = 0; finalPrem = premium > 0 ? -Math.abs(premium) : premium; }
+                        else if (tx.isEndorsement) { finalNop = 0; finalPrem = premium; }
                         
-                        if (passesLBFilter && finalNop !== 0) {
+                        if (passesLBFilter && (finalNop !== 0 || finalPrem !== 0)) {
                             agentLB[agent].ytdGWP += finalPrem;
                             agentLB[agent].ytdNOP += finalNop;
                         }
 
-                        if (passesFilter && tx.isFresh) {
+                        if (passesFilter && (finalNop !== 0 || finalPrem !== 0)) {
                             if (!agentMonthlyPureGWP[agent]) agentMonthlyPureGWP[agent] = {};
                             if (!agentMonthlyPureGWP[agent][fyMonthIndex]) agentMonthlyPureGWP[agent][fyMonthIndex] = 0;
-                            agentMonthlyPureGWP[agent][fyMonthIndex] += premium;
+                            agentMonthlyPureGWP[agent][fyMonthIndex] += finalPrem; 
+                            
+                            // Key Agent Setup
+                            if (isKeyAgent(agent)) {
+                                fyData[fyMonthIndex].keyAgentGWP += finalPrem;
+                                totalKeyAgentGWP += finalPrem;
+                            }
                         }
 
-                        if(passesFilter && finalNop !== 0) {
+                        if(passesFilter && (finalNop !== 0 || finalPrem !== 0)) {
                             fyData[fyMonthIndex].freshNOP += finalNop;
                             fyData[fyMonthIndex].freshAmount += finalPrem;
                             totalFreshNOP += finalNop;
                             totalFreshAmt += finalPrem;
                         }
 
-                        if (passesFilter && tx.isFresh) {
+                        if (passesFilter && (finalNop !== 0 || finalPrem !== 0)) {
                             let prod = getColValue(row, COL_PRODUCT_KEYS) || 'Unspecified';
                             let si = getColValue(row, COL_SUM_INSURED_KEYS) || 'Unspecified';
                             
                             if(!productBreakdown[prod]) productBreakdown[prod] = { nop: 0, prem: 0 };
-                            productBreakdown[prod].nop += 1;
-                            productBreakdown[prod].prem += premium;
+                            productBreakdown[prod].nop += finalNop;
+                            productBreakdown[prod].prem += finalPrem;
 
                             if(!siBreakdown[si]) siBreakdown[si] = { nop: 0, prem: 0 };
-                            siBreakdown[si].nop += 1;
-                            siBreakdown[si].prem += premium;
+                            siBreakdown[si].nop += finalNop;
+                            siBreakdown[si].prem += finalPrem;
                         }
                     }
                     else if (rowFY === (state.selectedYear - 1) && passesFilter) {
                         if (tx.isFresh) { prevFreshNOP += 1; prevFreshAmt += premium; }
                         else if (tx.isCancel) { prevFreshNOP -= 1; prevFreshAmt += (premium > 0 ? -Math.abs(premium) : premium); }
+                        else if (tx.isRefund) { prevFreshAmt += (premium > 0 ? -Math.abs(premium) : premium); }
+                        else if (tx.isEndorsement) { prevFreshAmt += premium; }
                     }
                 } 
                 else if (state.main === 'renewal') {
@@ -1497,15 +1479,14 @@
             const freshLB = document.getElementById('cluster-leaderboard-fresh');
             const renLB = document.getElementById('cluster-leaderboard-renewal');
             const actSection = document.getElementById('activation-bands');
+            const keyAgentSection = document.getElementById('key-agent-section');
             
             if (state.sub === 'cluster' || state.sub === 'manager') {
                 leaderboardWrapper.classList.remove('hidden');
-                
                 const lbSelect = document.getElementById('leaderboard-month-select');
                 const prevMVal = lbSelect.value;
                 lbSelect.innerHTML = FY_MONTHS.map((m, i) => `<option value="${i}">${m}</option>`).join('');
-                if (prevMVal !== "") lbSelect.value = prevMVal;
-                else lbSelect.value = "0";
+                if (prevMVal !== "") lbSelect.value = prevMVal; else lbSelect.value = "0";
 
                 if (state.main === 'fresh') {
                     freshLB.classList.remove('hidden'); renLB.classList.add('hidden');
@@ -1526,9 +1507,46 @@
                     document.getElementById('act-2l').innerText = act.b2L;
                     document.getElementById('act-3l').innerText = act.b3L;
 
+                    // KEY AGENT LOGIC
+                    keyAgentSection.classList.remove('hidden');
+                    let overallPct = totalFreshAmt > 0 ? Math.round((totalKeyAgentGWP / totalFreshAmt) * 100) : 0;
+                    let overallStyle = getKeyAgentStyles(overallPct);
+
+                    document.getElementById('key-agent-wrapper').className = `${overallStyle.bg} px-4 py-2 rounded-xl border flex flex-col text-right transition-colors`;
+                    document.getElementById('key-agent-label').className = `text-[9px] font-bold uppercase tracking-wider ${overallStyle.subText}`;
+                    document.getElementById('key-agent-overall').innerHTML = `<span class="${overallStyle.text}">${overallStyle.icon} ${overallPct}%</span> <span class="text-[10px] font-bold ${overallStyle.subText} ml-0.5">(₹${totalKeyAgentGWP.toLocaleString('en-IN', {maximumFractionDigits:0})})</span>`;
+                    
+                    let momHtml = '';
+                    fyData.forEach((d, i) => {
+                        let monthName = FY_MONTHS[i];
+                        let monthPct = 0;
+                        if (d.freshAmount > 0) monthPct = Math.round((d.keyAgentGWP / d.freshAmount) * 100);
+                        else if (d.freshAmount < 0 && d.keyAgentGWP < 0) monthPct = Math.round((d.keyAgentGWP / d.freshAmount) * 100);
+                        
+                        let style = getKeyAgentStyles(monthPct);
+                        let barWidth = Math.min(100, Math.max(0, monthPct));
+                        
+                        momHtml += `
+                        <div class="flex flex-col bg-white p-3 rounded-xl border ${style.bg} shadow-sm">
+                            <div class="flex justify-between items-center mb-1.5">
+                                <span class="text-[10px] font-bold text-slate-600">${monthName}</span>
+                                <span class="text-[11px] font-black ${style.text} flex items-center gap-1">${style.icon} ${monthPct}%</span>
+                            </div>
+                            <div class="w-full bg-white/60 rounded-full h-1.5 mb-2 overflow-hidden shadow-inner">
+                                <div class="${style.bar} h-1.5 rounded-full transition-all duration-500" style="width: ${barWidth}%"></div>
+                            </div>
+                            <div class="text-[9px] ${style.subText} font-bold flex justify-between">
+                                <span>Key:</span>
+                                <span>₹${d.keyAgentGWP.toLocaleString('en-IN', {maximumFractionDigits:0})}</span>
+                            </div>
+                        </div>`;
+                    });
+                    document.getElementById('key-agent-mom').innerHTML = momHtml;
+
                 } else {
                     freshLB.classList.add('hidden'); renLB.classList.remove('hidden');
                     actSection.classList.add('hidden'); actSection.classList.remove('grid');
+                    keyAgentSection.classList.add('hidden');
                     
                     const tYtdRen = Object.keys(agentLB).filter(a => agentLB[a].ytdBase >= 5).sort((a,b) => (agentLB[b].ytdRen/agentLB[b].ytdBase) - (agentLB[a].ytdRen/agentLB[a].ytdBase)).slice(0, 3);
                     document.getElementById('lb-ytd-ren').innerHTML = tYtdRen.map((a, i) => `<div class="flex justify-between items-center text-[11px] pb-1.5 border-b border-slate-50 last:border-0"><span class="font-medium text-slate-700 truncate"><span class="text-slate-400 mr-1">#${i+1}</span>${a}</span><span class="font-bold text-emerald-600">${Math.round((agentLB[a].ytdRen/agentLB[a].ytdBase)*100)}%</span></div>`).join('');
@@ -1537,25 +1555,23 @@
                 }
             } else { 
                 leaderboardWrapper.classList.add('hidden');
-                freshLB.classList.add('hidden'); 
-                renLB.classList.add('hidden'); 
-                actSection.classList.add('hidden'); 
-                actSection.classList.remove('grid'); 
+                freshLB.classList.add('hidden'); renLB.classList.add('hidden'); 
+                actSection.classList.add('hidden'); actSection.classList.remove('grid'); 
+                keyAgentSection.classList.add('hidden');
             }
 
-            renderSummary(totalFreshAmt, totalFreshNOP, prevFreshAmt, prevFreshNOP, totalBaseNOP, totalRenewed, totalMissed, totalYet, 0, 0);
+            renderSummary(totalFreshAmt, totalFreshNOP, prevFreshAmt, prevFreshNOP, totalBaseNOP, totalRenewed, totalMissed, totalYet);
             renderGrid(fyData);
             renderChart(fyData);
 
             const breakdownSection = document.getElementById('fresh-breakdowns');
             if (state.main === 'fresh') {
                 breakdownSection.classList.remove('hidden'); breakdownSection.classList.add('grid');
-                
                 const prodHtml = Object.keys(productBreakdown).sort((a,b) => productBreakdown[b].prem - productBreakdown[a].prem).map(p => `
                     <div class="flex justify-between items-center text-xs pb-3 border-b border-slate-50 last:border-0">
                         <span class="font-medium text-slate-700 truncate pr-2 w-1/2" title="${p}">${p}</span>
                         <div class="text-right w-1/2">
-                            <div class="font-bold text-slate-800 tracking-tight">₹${productBreakdown[p].prem.toLocaleString('en-IN', {maximumFractionDigits:0})} <span class="text-[9px] text-slate-400 font-normal">GWP</span></div>
+                            <div class="font-bold ${productBreakdown[p].prem < 0 ? 'text-rose-600' : 'text-slate-800'} tracking-tight">₹${productBreakdown[p].prem.toLocaleString('en-IN', {maximumFractionDigits:0})} <span class="text-[9px] text-slate-400 font-normal">GWP</span></div>
                             <div class="text-[10px] text-blue-600 font-bold mt-0.5">${productBreakdown[p].nop} Policies</div>
                         </div>
                     </div>`).join('');
@@ -1565,7 +1581,7 @@
                     <div class="flex justify-between items-center text-xs pb-3 border-b border-slate-50 last:border-0">
                         <span class="font-medium text-slate-700 w-1/2">${formatSumInsured(s)}</span>
                         <div class="text-right w-1/2">
-                            <div class="font-bold text-slate-800 tracking-tight">₹${siBreakdown[s].prem.toLocaleString('en-IN', {maximumFractionDigits:0})} <span class="text-[9px] text-slate-400 font-normal">GWP</span></div>
+                            <div class="font-bold ${siBreakdown[s].prem < 0 ? 'text-rose-600' : 'text-slate-800'} tracking-tight">₹${siBreakdown[s].prem.toLocaleString('en-IN', {maximumFractionDigits:0})} <span class="text-[9px] text-slate-400 font-normal">GWP</span></div>
                             <div class="text-[10px] text-blue-600 font-bold mt-0.5">${siBreakdown[s].nop} Policies</div>
                         </div>
                     </div>`).join('');
@@ -1580,14 +1596,14 @@
                     <div class="bg-slate-900 rounded-2xl p-5 shadow-lg text-white col-span-1 md:col-span-2 relative overflow-hidden">
                         <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-500 rounded-full blur-2xl opacity-20"></div>
                         <div class="flex items-center mb-1 relative z-10">
-                            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Fresh & Rollover Premium (GWP)</span>
+                            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Net Fresh & Rollover (GWP)</span>
                             ${getYoYBadge(tFreshAmt, pFreshAmt)}
                         </div>
                         <div class="text-3xl font-black relative tracking-tight z-10">₹${tFreshAmt.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
                     </div>
                     <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col justify-center">
                         <div class="flex items-center mb-1">
-                            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Policy Count</span>
+                            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Net Policy Count</span>
                             ${getYoYBadge(tFreshNOP, pFreshNOP)}
                         </div>
                         <div class="text-2xl font-black text-blue-600 tracking-tight">${tFreshNOP}</div>
@@ -1599,18 +1615,13 @@
                 `;
             } else {
                 const renewPercent = tBase > 0 ? Math.round((tRenewed / tBase) * 100) : 0;
-
                 summaryDiv.innerHTML = `
                     <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-                        <div class="flex items-center mb-1">
-                            <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Base Policies</span>
-                        </div>
+                        <div class="flex items-center mb-1"><span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Base Policies</span></div>
                         <div class="text-2xl font-black text-slate-800 tracking-tight">${tBase}</div>
                     </div>
                     <div class="bg-emerald-50 rounded-2xl p-5 shadow-sm border border-emerald-200">
-                        <div class="flex items-center mb-1">
-                            <span class="text-emerald-700 text-[10px] font-bold uppercase tracking-widest">Renewed</span>
-                        </div>
+                        <div class="flex items-center mb-1"><span class="text-emerald-700 text-[10px] font-bold uppercase tracking-widest">Renewed</span></div>
                         <div class="text-2xl font-black text-emerald-600 tracking-tight">${tRenewed}</div>
                     </div>
                     <div class="bg-rose-50 rounded-2xl p-5 shadow-sm border border-rose-200">
@@ -1618,9 +1629,7 @@
                         <div class="text-2xl font-black text-rose-600 tracking-tight">${tMissed}</div>
                     </div>
                     <div class="bg-slate-900 rounded-2xl p-5 shadow-lg text-white">
-                        <div class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1 flex items-center">
-                            <span>Pending</span>
-                        </div>
+                        <div class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1 flex items-center"><span>Pending</span></div>
                         <div class="flex items-end justify-between">
                             <div class="text-2xl font-black text-amber-400 tracking-tight">${tYet}</div>
                             <div class="text-[10px] font-bold text-slate-300 bg-slate-800 px-2.5 py-1 rounded-lg">Rt: ${renewPercent}%</div>
@@ -1636,37 +1645,34 @@
             fyData.forEach((data, index) => {
                 const monthName = FY_MONTHS[index];
                 if (state.main === 'fresh') {
-                    const actBadge = data.activations > 0 
-                        ? `<button onclick="event.stopPropagation(); openActivationDrillDown(${index})" class="text-emerald-700 text-[11px] font-extrabold bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-lg shrink-0 transition-colors shadow-sm" title="View Active Agents">${data.activations} Act.</button>` 
-                        : '';
-
+                    const actBadge = data.activations > 0 ? `<button onclick="event.stopPropagation(); openActivationDrillDown(${index})" class="text-emerald-700 text-[11px] font-extrabold bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-lg shrink-0 transition-colors shadow-sm" title="View Active Agents">${data.activations} Act.</button>` : '';
                     const nopBadge = `<button onclick="event.stopPropagation(); openPolicyDrillDown(${index})" class="text-blue-600 text-[11px] font-extrabold bg-blue-50 hover:bg-blue-100 border border-blue-100 px-2 py-0.5 rounded-lg shrink-0 transition-colors shadow-sm" title="View Policies">${data.freshNOP} NOP</button>`;
-
                     let distributionHtml = '';
-                    if ((state.sub === 'cluster' || state.sub === 'manager') && (data.freshNOP > 0 || data.activations > 0)) {
+                    
+                    if ((state.sub === 'cluster' || state.sub === 'manager') && (data.freshNOP > 0 || data.activations > 0 || data.actDistribution.below15k > 0)) {
                         distributionHtml = `
                         <div class="grid grid-cols-6 gap-1 mt-3 pt-2.5 border-t border-slate-100 text-center">
                             <div onclick="event.stopPropagation(); openActivationDrillDown(${index}, 'below15k')" class="flex flex-col bg-slate-100/70 hover:bg-slate-200/70 cursor-pointer rounded-lg py-1 transition-all border border-slate-200/60" title="Click to view Inactive Agents (<15K)">
                                 <span class="text-[9px] text-slate-400 font-extrabold uppercase">&lt;15K</span>
                                 <span class="font-black text-slate-600 text-xs mt-0.5">${data.actDistribution.below15k}</span>
                             </div>
-                            <div onclick="event.stopPropagation(); openActivationDrillDown(${index}, '15K')" class="flex flex-col bg-slate-50 hover:bg-slate-100 cursor-pointer rounded-lg py-1 transition-all border border-slate-200/60" title="Click to view Agents in 15K - 50K">
+                            <div onclick="event.stopPropagation(); openActivationDrillDown(${index}, '15K')" class="flex flex-col bg-slate-50 hover:bg-slate-100 cursor-pointer rounded-lg py-1 transition-all border border-slate-200/60">
                                 <span class="text-[9px] text-slate-500 font-extrabold uppercase">15K</span>
                                 <span class="font-black text-slate-800 text-xs mt-0.5">${data.actDistribution.b15k}</span>
                             </div>
-                            <div onclick="event.stopPropagation(); openActivationDrillDown(${index}, '50K')" class="flex flex-col bg-slate-50 hover:bg-slate-100 cursor-pointer rounded-lg py-1 transition-all border border-slate-200/60" title="Click to view Agents in 50K - 1L">
+                            <div onclick="event.stopPropagation(); openActivationDrillDown(${index}, '50K')" class="flex flex-col bg-slate-50 hover:bg-slate-100 cursor-pointer rounded-lg py-1 transition-all border border-slate-200/60">
                                 <span class="text-[9px] text-slate-500 font-extrabold uppercase">50K</span>
                                 <span class="font-black text-slate-800 text-xs mt-0.5">${data.actDistribution.b50k}</span>
                             </div>
-                            <div onclick="event.stopPropagation(); openActivationDrillDown(${index}, '1L')" class="flex flex-col bg-slate-50 hover:bg-slate-100 cursor-pointer rounded-lg py-1 transition-all border border-slate-200/60" title="Click to view Agents in 1L - 2L">
+                            <div onclick="event.stopPropagation(); openActivationDrillDown(${index}, '1L')" class="flex flex-col bg-slate-50 hover:bg-slate-100 cursor-pointer rounded-lg py-1 transition-all border border-slate-200/60">
                                 <span class="text-[9px] text-slate-500 font-extrabold uppercase">1L</span>
                                 <span class="font-black text-slate-800 text-xs mt-0.5">${data.actDistribution.b1L}</span>
                             </div>
-                            <div onclick="event.stopPropagation(); openActivationDrillDown(${index}, '2L')" class="flex flex-col bg-slate-50 hover:bg-slate-100 cursor-pointer rounded-lg py-1 transition-all border border-slate-200/60" title="Click to view Agents in 2L - 3L">
+                            <div onclick="event.stopPropagation(); openActivationDrillDown(${index}, '2L')" class="flex flex-col bg-slate-50 hover:bg-slate-100 cursor-pointer rounded-lg py-1 transition-all border border-slate-200/60">
                                 <span class="text-[9px] text-slate-500 font-extrabold uppercase">2L</span>
                                 <span class="font-black text-slate-800 text-xs mt-0.5">${data.actDistribution.b2L}</span>
                             </div>
-                            <div onclick="event.stopPropagation(); openActivationDrillDown(${index}, '3L+')" class="flex flex-col bg-amber-50 hover:bg-amber-100 cursor-pointer rounded-lg py-1 transition-all border border-amber-200" title="Click to view Agents >= 3L">
+                            <div onclick="event.stopPropagation(); openActivationDrillDown(${index}, '3L+')" class="flex flex-col bg-amber-50 hover:bg-amber-100 cursor-pointer rounded-lg py-1 transition-all border border-amber-200">
                                 <span class="text-[9px] text-amber-600 font-extrabold uppercase">3L+</span>
                                 <span class="font-black text-amber-800 text-xs mt-0.5">${data.actDistribution.b3L}</span>
                             </div>
@@ -1678,12 +1684,9 @@
                         <div class="relative z-10">
                             <div class="flex justify-between items-center mb-2">
                                 <span class="text-xs font-black text-slate-400 uppercase group-hover:text-blue-600 transition-colors">${monthName}</span>
-                                <div class="flex items-center gap-1.5">
-                                    ${actBadge}
-                                    ${nopBadge}
-                                </div>
+                                <div class="flex items-center gap-1.5">${actBadge}${nopBadge}</div>
                             </div>
-                            <div class="text-base font-black text-slate-800 truncate tracking-tight">₹${data.freshAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                            <div class="text-base font-black ${data.freshAmount < 0 ? 'text-rose-600' : 'text-slate-800'} truncate tracking-tight">₹${data.freshAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
                             ${distributionHtml}
                         </div>
                     </div>`;
@@ -1720,8 +1723,8 @@
 
             if (state.main === 'fresh') {
                 datasets = [
-                    { label: 'GWP', data: fyData.map(d => d.freshAmount), backgroundColor: '#3b82f6', borderRadius: 6, type: 'bar', yAxisID: 'y' },
-                    { label: 'NOP', data: fyData.map(d => d.freshNOP), borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#fff', type: 'line', tension: 0.3, yAxisID: 'y1' }
+                    { label: 'Net GWP', data: fyData.map(d => d.freshAmount), backgroundColor: '#3b82f6', borderRadius: 6, type: 'bar', yAxisID: 'y' },
+                    { label: 'Net NOP', data: fyData.map(d => d.freshNOP), borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#fff', type: 'line', tension: 0.3, yAxisID: 'y1' }
                 ];
                 chartOptions.scales = { x: { grid: { display: false } }, y: { display: false }, y1: { display: false } };
             } else {
